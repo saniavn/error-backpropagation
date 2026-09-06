@@ -1,0 +1,2963 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>XOR Backprop — Watch the Error Flow Back</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
+
+    <style>
+      :root {
+        --fwd: #1f4fd8;
+        --err: #d32f2f;
+        --grad: #e8890c;
+        --struct: #2e7d32;
+        --ink: #141821;
+        --line: #d5dae2;
+        --ink-soft: #3b4252;
+        --panel: #ffffff;
+        --blue-bg: #eaf0fd;
+        --green-bg: #e6f5ea;
+        --amber-bg: #fdf1e2;
+        --red-bg: #fdeaea;
+        --shadow:
+          0 1px 2px rgba(20, 24, 33, 0.06),
+          0 10px 28px -14px rgba(20, 24, 33, 0.22);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      [hidden] {
+        display: none !important;
+      }
+
+      html,
+      body {
+        margin: 0;
+        min-height: 100dvh;
+      }
+
+      body {
+        background: #ffffff;
+        -webkit-font-smoothing: antialiased;
+        display: flex;
+        flex-direction: column;
+        font-family: "Space Grotesk", system-ui, sans-serif;
+        gap: 14px;
+        padding: 16px 20px 24px;
+        color: var(--ink);
+
+        font-size: 16px;
+        line-height: 1.45;
+      }
+      header.top {
+        display: flex;
+        flex-wrap: wrap;
+        flex: 0 0 auto;
+        align-items: center;
+        gap: 16px;
+      }
+
+      header.top h1 {
+        font-size: 24px;
+        letter-spacing: -0.01em;
+        font-weight: 700;
+        margin: 0;
+      }
+
+      .num {
+        font-variant-numeric: tabular-nums;
+        font-family: "JetBrains Mono", ui-monospace, monospace;
+      }
+
+      header.top .sub {
+        color: var(--ink-soft);
+        font-size: 15px;
+      }
+
+      .epoch-badge {
+        font-size: 15px;
+        margin-left: auto;
+        color: var(--ink-soft);
+      }
+      .goal {
+        flex: 0 0 auto;
+        border-radius: 14px;
+        padding: 12px 16px;
+        align-items: center;
+        box-shadow: var(--shadow);
+        gap: 14px;
+        flex-wrap: wrap;
+        background: var(--panel);
+        border: 1px solid var(--line);
+        display: flex;
+      }
+      .epoch-badge b {
+        font-size: 18px;
+        font-family: "JetBrains Mono", monospace;
+        color: var(--ink);
+      }
+
+      .pill {
+        border-radius: 999px;
+        gap: 9px;
+        padding: 8px 16px;
+        font-size: 16px;
+        font-weight: 700;
+        transition: 0.25s;
+        display: inline-flex;
+        align-items: center;
+      }
+
+      .pill.neutral {
+        background: var(--blue-bg);
+        color: var(--fwd);
+      }
+      .pill.solved {
+        background: var(--green-bg);
+        color: var(--struct);
+      }
+      .pill.learning {
+        background: var(--amber-bg);
+        color: #b56a04;
+      }
+
+      .goal .hint b {
+        color: var(--ink);
+      }
+      .pill .emoji {
+        font-size: 19px;
+      }
+
+      .goal .hint {
+        color: var(--ink-soft);
+        font-size: 14px;
+        margin-left: auto;
+      }
+
+      .main-flex {
+        min-height: 0;
+        flex: 1 1 0;
+        gap: 16px;
+        align-items: stretch;
+        display: flex;
+      }
+
+      .panel {
+        background: var(--panel);
+        padding: 14px;
+        display: flex;
+        flex-direction: column;
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        box-shadow: var(--shadow);
+      }
+
+      .panel.left {
+        flex: 0 0 235px;
+      }
+
+      .panel.center {
+        min-width: 0;
+        flex: 1 1 0;
+        border-radius: 0;
+        border: none;
+        box-shadow: none;
+        position: relative;
+        overflow: visible;
+      }
+
+      .panel.right {
+        flex: 0 0 250px;
+        position: relative;
+        overflow: visible;
+      }
+
+      .panel h2 {
+        font-size: 13px;
+        margin: 0 0 10px;
+        font-weight: 600;
+        letter-spacing: 0.08em;
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        flex: 0 0 auto;
+        text-transform: uppercase;
+        color: var(--ink-soft);
+      }
+
+      .dot {
+        border-radius: 2px;
+        display: inline-block;
+        width: 9px;
+        height: 9px;
+      }
+
+      .map-wrap {
+        position: relative;
+        width: 100%;
+        flex: 0 0 auto;
+      }
+
+      #mapCanvas {
+        border-radius: 10px;
+        background: #fff;
+        display: block;
+        width: 100%;
+        height: auto;
+      }
+
+      .network-wrap {
+        position: relative;
+        flex: 1 1 0;
+        width: 100%;
+        min-height: 390px;
+      }
+
+      .network-wrap svg {
+        display: block;
+        width: 100%;
+        height: 100%;
+      }
+
+      .maptoggle {
+        display: flex;
+        font-size: 13.5px;
+        color: var(--ink-soft);
+        flex: 0 0 auto;
+        user-select: none;
+        gap: 9px;
+        margin: 10px 0;
+        cursor: pointer;
+        align-items: center;
+      }
+
+      .maptoggle input {
+        accent-color: var(--fwd);
+        width: 17px;
+        height: 17px;
+      }
+
+      table.truth {
+        font-size: 14px;
+        flex: 1 1 auto;
+        width: 100%;
+        border-collapse: collapse;
+      }
+
+      table.truth th {
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        padding: 4px 0;
+        color: var(--ink);
+        font-size: 13px;
+        text-align: center;
+        font-weight: 700;
+      }
+
+      table.truth td {
+        padding: 6px 0;
+        text-align: center;
+        border-top: 1px solid var(--line-soft);
+      }
+
+      table.truth td:first-child {
+        font-weight: 600;
+      }
+
+      .chip {
+        display: inline-block;
+        border-radius: 50%;
+        vertical-align: -1px;
+        width: 12px;
+        height: 12px;
+      }
+
+      .panel.center svg {
+        flex: 1 1 0;
+        min-height: 390px;
+        width: 100%;
+        display: block;
+      }
+
+      .legend {
+        font-size: 14px;
+        display: flex;
+        flex-wrap: wrap;
+        color: var(--ink-soft);
+        flex: 0 0 auto;
+        gap: 10px 18px;
+        margin-top: 8px;
+      }
+
+      .lg {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+      }
+
+      .lg .back-arrow {
+        font-size: 25px;
+        font-weight: 800;
+        line-height: 1;
+        display: inline-block;
+        color: var(--err);
+      }
+
+      .control-group {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 4px;
+      }
+      .graph-buttons {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: flex-start;
+        box-sizing: border-box;
+        position: relative;
+        left: 94px;
+        width: calc(100% - 94px);
+        margin: 4px 0 4px;
+        padding-left: 0;
+        flex: 0 0 auto;
+        gap: 10px;
+        align-items: flex-end;
+      }
+
+      .step-nav-group {
+        gap: 8px;
+        flex: 0 0 auto;
+        display: flex;
+        align-items: flex-end;
+      }
+
+      .control-meta {
+        font-size: 13px;
+        color: var(--ink-soft);
+        line-height: 18px;
+
+        white-space: nowrap;
+        min-height: 18px;
+      }
+
+      .control-meta b {
+        color: var(--ink);
+        font-size: 16px;
+        font-family: "JetBrains Mono", monospace;
+      }
+      table.res {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 14px;
+      }
+
+      table.res .y {
+        color: var(--fwd);
+      }
+
+      table.res .e {
+        color: var(--err);
+      }
+
+      .graph-buttons button {
+        border-radius: 7px;
+        padding: 9px 20px;
+        white-space: nowrap;
+        width: auto;
+        min-width: 0;
+        height: 44px;
+      }
+      .panel.center svg.loss-link-arrow {
+        min-height: 0;
+        flex: none;
+        width: 100vw;
+        height: 100vh;
+      }
+
+      .loss-link-arrow {
+        position: fixed;
+        pointer-events: none;
+        overflow: visible;
+        z-index: 4;
+        inset: 0;
+        height: 100vh;
+        width: 100vw;
+      }
+
+      .lossbox {
+        padding: 14px 14px 18px;
+        position: relative;
+        margin-top: 12px;
+        z-index: 1;
+        flex: 0 0 auto;
+        border-radius: 0;
+        border: 1.5px solid var(--err);
+      }
+
+      .lossbox .lab {
+        display: block;
+        text-align: center;
+      }
+
+      .lossbox .loss-title {
+        display: block;
+        color: #000;
+        font-size: 30px;
+        font-weight: 700;
+        line-height: 1.05;
+      }
+
+      .lossbox .loss-subtitle {
+        display: block;
+        color: #000;
+        font-size: 17px;
+        font-weight: 700;
+        white-space: normal;
+        line-height: 1.15;
+        margin-top: 8px;
+      }
+
+      .lossbox .val {
+        line-height: 1;
+        margin: 26px 0 18px;
+        font-family: "Space Grotesk", system-ui, sans-serif;
+        font-size: 36px;
+        font-weight: 700;
+        text-align: center;
+      }
+
+      #lossCanvas {
+        width: 100%;
+        height: 154px;
+        display: block;
+        border-radius: 0;
+      }
+
+      .lossaxis {
+        display: none;
+      }
+
+      .step-control {
+        position: relative;
+        padding-top: 98px;
+      }
+
+      .tip {
+        padding: 12px 15px;
+        margin: 0;
+        font-size: 16px;
+        line-height: 1.4;
+        text-align: left;
+        background: #f7f9fc;
+        border: 1px solid #8e949d;
+        border-radius: 0;
+        position: absolute;
+        top: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 420px;
+        min-height: 72px;
+      }
+
+      .current-step-label {
+        min-height: 18px;
+        margin-bottom: 2px;
+        font-size: 14px;
+        line-height: 18px;
+        font-weight: 400;
+        color: var(--ink);
+        white-space: nowrap;
+      }
+
+      .current-step-label b {
+        font-weight: 800;
+      }
+
+      .tip::before {
+        border-style: solid;
+        border-color: #8e949d transparent transparent transparent;
+        border-width: 14px 14px 0 0;
+        content: "";
+        position: absolute;
+        left: 58%;
+        bottom: -14px;
+      }
+
+      .tip::after {
+        content: "";
+        position: absolute;
+        left: calc(58% + 1px);
+        bottom: -11px;
+        border-width: 12px 12px 0 0;
+        border-style: solid;
+        border-color: #f7f9fc transparent transparent transparent;
+      }
+
+      button {
+        border-radius: 10px;
+        border: 1px solid var(--line);
+        font-family: inherit;
+        font-size: 15px;
+        font-weight: 600;
+        padding: 11px 17px;
+        background: #fff;
+        color: var(--ink);
+        cursor: pointer;
+      }
+
+      button.step {
+        background: var(--struct);
+        color: #fff;
+        border-color: var(--struct);
+        font-size: 16px;
+        padding: 12px 22px;
+      }
+
+      button.train {
+        background: var(--struct);
+        color: #fff;
+        border-color: var(--struct);
+      }
+      button:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+      }
+
+      button.prev-btn {
+        background: #e6b840;
+        color: #000;
+        border-color: #c99c2d;
+      }
+
+      .math-tip {
+        z-index: 1000;
+        opacity: 0;
+        color: var(--ink);
+        line-height: 1.6;
+        box-shadow: var(--shadow);
+        pointer-events: none;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 10px 14px;
+        font-size: 13px;
+        position: fixed;
+        background: var(--panel);
+      }
+
+      @keyframes bpmarch {
+        to {
+          stroke-dashoffset: -26;
+        }
+      }
+
+      .bp-line {
+        stroke-dasharray: 7 6;
+        animation: bpmarch 0.7s linear infinite;
+      }
+
+      .panel.center {
+        flex: 1 1 0;
+        position: relative;
+      }
+      .network-wrap {
+        min-height: 560px;
+        padding-right: 178px;
+      }
+      .network-loss {
+        position: absolute;
+        top: 14px;
+        right: 14px;
+        width: 190px;
+        margin: 0 !important;
+        background: #fff;
+        z-index: 8;
+      }
+      .network-loss #lossCanvas {
+        height: 154px;
+      }
+      .output-maps-toggle {
+        border: 1px solid #9da4ae;
+        border-radius: 10px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background: #fff;
+        padding: 9px 14px;
+        color: var(--ink);
+        cursor: pointer;
+        white-space: nowrap;
+        font-size: 15px;
+        font-weight: 600;
+        gap: 8px;
+        height: 44px;
+      }
+      .output-maps-toggle input {
+        width: 17px;
+        height: 17px;
+        accent-color: var(--struct);
+        margin: 0;
+      }
+      @media (max-width: 1050px) {
+        .network-wrap {
+          overflow-x: auto;
+          padding-right: 0;
+        }
+        .network-wrap > svg#net {
+          min-width: 1160px;
+        }
+        .network-loss {
+          position: relative;
+          top: auto;
+          right: auto;
+          width: min(250px, 100%);
+          margin: 0 0 10px auto !important;
+        }
+        .loss-link-arrow {
+          display: none !important;
+        }
+      }
+
+      .panel.center {
+        width: 100%;
+        min-width: 0;
+      }
+
+      .network-wrap {
+        width: 100%;
+        min-height: 0;
+        margin-inline: auto;
+        overflow: visible;
+        height: auto;
+        max-height: calc(100dvh - 330px);
+        aspect-ratio: 1160 / 520;
+      }
+
+      .network-wrap > svg#net {
+        display: block;
+        width: 100%;
+        height: 100%;
+        min-width: 0;
+        min-height: 0;
+      }
+
+      .graph-buttons {
+        flex-wrap: wrap;
+        row-gap: 10px;
+      }
+
+      @media (max-width: 1050px) {
+        body {
+          padding: 12px;
+        }
+
+        .network-wrap {
+          padding-right: 0;
+          overflow: visible;
+        }
+
+        .network-wrap > svg#net {
+          min-width: 0;
+        }
+
+        .network-loss {
+          position: relative;
+          top: auto;
+          right: auto;
+          width: min(260px, 100%);
+          margin: 0 0 10px auto !important;
+        }
+
+        .graph-buttons button,
+        .output-maps-toggle {
+          font-size: 16px;
+        }
+      }
+
+      @media (max-width: 700px) {
+        header.top h1 {
+          font-size: 22px;
+        }
+        header.top .sub {
+          font-size: 15px;
+        }
+        .goal {
+          padding: 10px 12px;
+        }
+        .graph-buttons {
+          justify-content: center;
+          left: 0;
+          width: 100%;
+          padding-left: 0;
+        }
+        .graph-buttons button {
+          height: 42px;
+          padding: 8px 14px;
+        }
+        .tip {
+          width: min(420px, 90vw);
+        }
+      }
+
+      /* About page */
+      .about-topbar {
+        display: flex;
+        justify-content: flex-end;
+        align-items: center;
+        flex: 0 0 auto;
+      }
+
+      .about-btn {
+        background: #1f4fd8;
+        color: #ffffff;
+        border: 1px solid #1f4fd8;
+        padding: 9px 18px;
+        border-radius: 7px;
+        font-size: 15px;
+        font-weight: 600;
+        text-decoration: none;
+        cursor: pointer;
+      }
+
+      .about-btn:hover {
+        background: #183fae;
+        border-color: #183fae;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="mathTip" class="math-tip"></div>
+
+    <div class="about-topbar">
+      <a class="about-btn" href="about.html">About</a>
+    </div>
+
+    <div class="main-flex">
+      <div class="panel center">
+        <div class="lossbox network-loss">
+          <div class="lab">
+            <span class="loss-title">Loss E</span>
+            <span class="loss-subtitle"> (sum-squared output error) </span>
+          </div>
+          <div class="val num" id="lossVal">—</div>
+          <canvas id="lossCanvas" width="242" height="180"></canvas>
+          <div class="lossaxis">
+            <span>start</span>
+            <span id="lossEnd">now</span>
+          </div>
+        </div>
+
+        <div class="network-wrap">
+          <svg
+            id="net"
+            viewBox="0 0 1160 520"
+            preserveAspectRatio="xMidYMid meet"
+            xmlns="http://www.w3.org/2000/svg"
+          ></svg>
+        </div>
+
+        <svg
+          class="loss-link-arrow"
+          id="lossLinkArrow"
+          aria-hidden="true"
+          style="display: none"
+        >
+          <defs>
+            <marker
+              id="lossArrowHead"
+              viewBox="0 0 12 12"
+              refX="10.5"
+              refY="6"
+              markerWidth="6"
+              markerHeight="6"
+              orient="auto"
+            >
+              <path d="M 0 0 L 12 6 L 0 12 z" fill="#ff1c0d"></path>
+            </marker>
+          </defs>
+
+          <path
+            id="lossLinkPath"
+            d=""
+            fill="none"
+            stroke="#ff1c0d"
+            stroke-width="4.2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            marker-end="url(#lossArrowHead)"
+          ></path>
+        </svg>
+
+        <div class="graph-buttons">
+          <div class="control-group">
+            <button class="reset-inline" id="btnReset">Reset</button>
+          </div>
+
+          <div class="step-nav-group">
+            <div class="control-group">
+              <button class="prev-btn" id="btnPrev">Prev Step</button>
+            </div>
+
+            <div class="control-group step-control">
+              <div class="tip" id="tip">
+                <div class="now" id="tipNow"></div>
+                <div class="nxt" id="tipNext"></div>
+              </div>
+
+              <span class="current-step-label" id="currentStepLabel">
+                step <b>a</b>
+              </span>
+
+              <button class="step" id="btnNext">Next Step</button>
+            </div>
+          </div>
+
+          <div class="control-group">
+            <span class="control-meta">
+              <b id="epochCount" class="num">0</b> epochs
+            </span>
+            <button class="train" id="btnEpoch1">Train 1 Epoch</button>
+          </div>
+
+          <div class="control-group">
+            <button class="train" id="btnEpoch10">Train 10 Epochs</button>
+          </div>
+
+          <div class="control-group">
+            <button id="btnRun">▶ Auto-train</button>
+          </div>
+
+          <label
+            class="output-maps-toggle"
+            title="Replace neuron circles with their output plots"
+          >
+            <input type="checkbox" id="outputMapsToggle" checked />
+            <span>Output Maps</span>
+          </label>
+        </div>
+
+        <div class="legend">
+          <span class="lg">
+            <span class="dot" style="background: var(--fwd)"></span>
+            weights / signals forward →
+          </span>
+
+          <span class="lg">
+            <span class="back-arrow">←</span>
+            error flowing back
+          </span>
+
+          <span class="lg">
+            <span class="dot" style="background: var(--err)"></span>
+            error for each neuron
+          </span>
+
+          <span class="lg">
+            <span class="dot" style="background: #000"></span>
+            neuron outputs
+          </span>
+
+          <span class="lg">
+            <span class="dot" style="background: var(--struct)"></span>
+            training data
+          </span>
+
+          <span class="lg">
+            <span class="dot" style="background: var(--grad)"></span>
+            weight nudges ΔW
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      "use strict";
+
+      const PATTERNS = [
+        { name: "A", x: [-1, -1], d: -1 },
+        { name: "B", x: [1, -1], d: 1 },
+        { name: "C", x: [-1, 1], d: 1 },
+        { name: "D", x: [1, 1], d: -1 },
+      ];
+
+      const COLOR = {
+        fwd: "#1f4fd8",
+        err: "#d32f2f",
+        grad: "#e8890c",
+        struct: "#2e7d32",
+        activation: "#7c3aed",
+        ink: "#141821",
+        soft: "#5a6270",
+        line: "#d5dae2",
+      };
+
+      const FONT_SCALE = 1.52;
+
+      const GAP_SCALE = FONT_SCALE / 1.12;
+
+      const LR = 0.05;
+      const MOMENTUM = 0.8;
+      const INIT_SCALE = 0.5;
+
+      const FLAT_SPOT = 0.1;
+
+      const WEIGHT_DECAY = 0.0;
+
+      const RESET_TO_MOCKUP_WEIGHTS = false;
+
+      let net,
+        epoch,
+        lr,
+        momentum,
+        selPat,
+        phase,
+        running = null,
+        outputMaps = true;
+
+      const rand = (a, b) => a + Math.random() * (b - a);
+      const tanh = Math.tanh;
+
+      function newNet() {
+        const S = INIT_SCALE;
+
+        const weights = RESET_TO_MOCKUP_WEIGHTS
+          ? {
+              w: [
+                [0.312, -0.451],
+                [-0.924, 1.027],
+              ],
+              bh: [0.528, 0.684],
+              v: [0.715, -0.247],
+              bo: -0.593,
+            }
+          : {
+              w: [
+                [rand(-S, S), rand(-S, S)],
+                [rand(-S, S), rand(-S, S)],
+              ],
+              bh: [rand(-S, S), rand(-S, S)],
+              v: [rand(-S, S), rand(-S, S)],
+              bo: rand(-S, S),
+            };
+
+        return {
+          ...weights,
+          dw: [
+            [0, 0],
+            [0, 0],
+          ],
+          dbh: [0, 0],
+          dv: [0, 0],
+          dbo: 0,
+        };
+      }
+
+      function forward(N, x) {
+        const h = [0, 0];
+
+        for (let j = 0; j < 2; j++) {
+          h[j] = tanh(N.bh[j] + N.w[0][j] * x[0] + N.w[1][j] * x[1]);
+        }
+
+        const o = tanh(N.bo + N.v[0] * h[0] + N.v[1] * h[1]);
+
+        return { h, o };
+      }
+
+      function trace(N, p) {
+        const f = forward(N, p.x);
+        const E = f.o - p.d;
+
+        const dOut = E * (1 - f.o * f.o + FLAT_SPOT);
+
+        const dHid = [
+          dOut * N.v[0] * (1 - f.h[0] * f.h[0] + FLAT_SPOT),
+          dOut * N.v[1] * (1 - f.h[1] * f.h[1] + FLAT_SPOT),
+        ];
+
+        return {
+          name: p.name,
+          x: p.x,
+          d: p.d,
+          h: f.h,
+          o: f.o,
+          E,
+          dOut,
+          dHid,
+        };
+      }
+
+      function computeEpoch(N) {
+        const res = [];
+        let loss = 0;
+
+        const g = {
+          w: [
+            [0, 0],
+            [0, 0],
+          ],
+          bh: [0, 0],
+          v: [0, 0],
+          bo: 0,
+        };
+
+        for (const p of PATTERNS) {
+          const t = trace(N, p);
+
+          loss += t.E * t.E;
+          res.push(t);
+
+          g.v[0] += t.dOut * t.h[0];
+          g.v[1] += t.dOut * t.h[1];
+          g.bo += t.dOut;
+
+          for (let j = 0; j < 2; j++) {
+            g.w[0][j] += t.dHid[j] * p.x[0];
+            g.w[1][j] += t.dHid[j] * p.x[1];
+            g.bh[j] += t.dHid[j];
+          }
+        }
+
+        return { res, loss, g };
+      }
+
+      function computePending(N, g) {
+        const P = {
+          w: [
+            [0, 0],
+            [0, 0],
+          ],
+          bh: [0, 0],
+          v: [0, 0],
+          bo: 0,
+        };
+
+        for (let i = 0; i < 2; i++) {
+          for (let j = 0; j < 2; j++) {
+            P.w[i][j] =
+              -lr * (g.w[i][j] + WEIGHT_DECAY * N.w[i][j]) +
+              momentum * N.dw[i][j];
+          }
+        }
+
+        for (let j = 0; j < 2; j++) {
+          P.bh[j] = -lr * g.bh[j] + momentum * N.dbh[j];
+
+          P.v[j] = -lr * (g.v[j] + WEIGHT_DECAY * N.v[j]) + momentum * N.dv[j];
+        }
+
+        P.bo = -lr * g.bo + momentum * N.dbo;
+
+        return P;
+      }
+
+      function computeCaseDW(N, res) {
+        const share = (prev) => (momentum * prev) / PATTERNS.length;
+
+        const B = {
+          w: [
+            [[], []],
+            [[], []],
+          ],
+          bh: [[], []],
+          v: [[], []],
+          bo: [],
+        };
+
+        for (let i = 0; i < 2; i++) {
+          for (let j = 0; j < 2; j++) {
+            B.w[i][j] = res.map(
+              (r, k) => -lr * r.dHid[j] * PATTERNS[k].x[i] + share(N.dw[i][j]),
+            );
+          }
+        }
+
+        for (let j = 0; j < 2; j++) {
+          B.bh[j] = res.map((r) => -lr * r.dHid[j] + share(N.dbh[j]));
+
+          B.v[j] = res.map((r) => -lr * r.dOut * r.h[j] + share(N.dv[j]));
+        }
+
+        B.bo = res.map((r) => -lr * r.dOut + share(N.dbo));
+
+        return B;
+      }
+
+      let lastApplied = null;
+      let lastAppliedCases = null;
+
+      function applyUpdate(N, g) {
+        const before = computeEpoch(N);
+        const P = computePending(N, g);
+
+        lastApplied = P;
+        lastAppliedCases = computeCaseDW(N, before.res);
+
+        for (let i = 0; i < 2; i++) {
+          for (let j = 0; j < 2; j++) {
+            N.dw[i][j] = P.w[i][j];
+            N.w[i][j] += N.dw[i][j];
+          }
+        }
+
+        for (let j = 0; j < 2; j++) {
+          N.dbh[j] = P.bh[j];
+          N.bh[j] += N.dbh[j];
+
+          N.dv[j] = P.v[j];
+          N.v[j] += N.dv[j];
+        }
+
+        N.dbo = P.bo;
+        N.bo += N.dbo;
+      }
+
+      const PHASES = [
+        {
+          k: "a",
+          title: "Start of epoch",
+          back: false,
+          now: "Start of epoch.",
+          reveal: { inputs: 1 },
+        },
+        {
+          k: "b",
+          title: "Calculate hidden unit outputs (y)",
+          back: false,
+          now: "Calculate hidden unit outputs (y).",
+          reveal: { inputs: 1, h: 1 },
+        },
+        {
+          k: "c",
+          title: "Calculate output unit output (y)",
+          back: false,
+          now: "Calculate output unit output (y).",
+          reveal: { inputs: 1, h: 1, o: 1 },
+        },
+        {
+          k: "d",
+          title: "Calculate output unit error (delta = y-d)",
+          back: false,
+          now: "Calculate output unit error (delta = y-d).",
+          reveal: { inputs: 1, h: 1, o: 1, e: 1 },
+        },
+        {
+          k: "e",
+          title: "Backpropagate error to hidden units (delta)",
+          back: true,
+          now: "Backpropagate error to hidden units (delta).",
+          reveal: {
+            inputs: 1,
+            h: 1,
+            o: 1,
+            e: 1,
+            dOut: 1,
+            dHid: 1,
+            arrV: 1,
+          },
+        },
+        {
+          k: "f",
+          title: "Calculate weight adjustments (ΔW)",
+          back: true,
+          now: "Calculate weight adjustments (ΔW).",
+          reveal: {
+            inputs: 1,
+            h: 1,
+            o: 1,
+            e: 1,
+            dOut: 1,
+            dHid: 1,
+            arrV: 1,
+            g: 1,
+          },
+        },
+        {
+          k: "g",
+          title: "Update the weights",
+          back: false,
+          now: "Update the weights.",
+          reveal: {
+            inputs: 1,
+            h: 1,
+            o: 1,
+            e: 1,
+            g: 1,
+            upd: 1,
+          },
+        },
+      ];
+
+      function newDisplayState() {
+        return {
+          h: null,
+          o: null,
+          E: null,
+          dHid: null,
+          caseDW: null,
+          pendingDW: null,
+          loss: null,
+        };
+      }
+
+      let displayState = newDisplayState();
+
+      function snapshot() {
+        return JSON.stringify({
+          net,
+          epoch,
+          phase,
+          lossHist,
+          lastApplied,
+          lastAppliedCases,
+          displayState,
+        });
+      }
+
+      function restore(s) {
+        const o = JSON.parse(s);
+
+        net = o.net;
+        epoch = o.epoch;
+        phase = o.phase;
+        lossHist = o.lossHist;
+        lastApplied = o.lastApplied || null;
+        lastAppliedCases = o.lastAppliedCases || null;
+        displayState = o.displayState || newDisplayState();
+      }
+
+      let history = [];
+      let lossHist = [];
+
+      const currentComputed = () => computeEpoch(net);
+
+      function updateDisplayForPhase(targetPhase, c = currentComputed()) {
+        if (targetPhase === 1) {
+          displayState.h = [c.res.map((r) => r.h[0]), c.res.map((r) => r.h[1])];
+        } else if (targetPhase === 2) {
+          displayState.o = c.res.map((r) => r.o);
+        } else if (targetPhase === 3) {
+          displayState.E = c.res.map((r) => r.E);
+
+          displayState.loss = c.loss;
+        } else if (targetPhase === 4) {
+          displayState.dHid = [
+            c.res.map((r) => r.dHid[0]),
+            c.res.map((r) => r.dHid[1]),
+          ];
+        } else if (targetPhase === 5) {
+          displayState.caseDW = computeCaseDW(net, c.res);
+
+          displayState.pendingDW = computePending(net, c.g);
+        }
+      }
+
+      function updateAllDisplayValues(c = currentComputed()) {
+        displayState.h = [c.res.map((r) => r.h[0]), c.res.map((r) => r.h[1])];
+
+        displayState.o = c.res.map((r) => r.o);
+
+        displayState.E = c.res.map((r) => r.E);
+
+        displayState.loss = c.loss;
+
+        displayState.dHid = [
+          c.res.map((r) => r.dHid[0]),
+          c.res.map((r) => r.dHid[1]),
+        ];
+
+        displayState.caseDW = computeCaseDW(net, c.res);
+
+        displayState.pendingDW = computePending(net, c.g);
+      }
+
+      const fmt = (v, d = 2) => (v >= 0 ? " " : "") + v.toFixed(d);
+
+      const fmtE = (v) => (v >= 0 ? "+" : "") + v.toFixed(2);
+
+      const netSvg = document.getElementById("net");
+
+      const NS = "http://www.w3.org/2000/svg";
+
+      function el(t, a, x) {
+        const e = document.createElementNS(NS, t);
+
+        for (const k in a) {
+          e.setAttribute(k, a[k]);
+        }
+
+        if (x != null) {
+          e.textContent = x;
+        }
+
+        return e;
+      }
+
+      const POS = {
+        in: [
+          { x: 300, y: 155, label: "x₁" },
+          { x: 300, y: 360, label: "x₂" },
+        ],
+        hid: [
+          { x: 675, y: 155 },
+          { x: 675, y: 360 },
+        ],
+        out: {
+          x: 965,
+          y: 258,
+        },
+      };
+
+      const RIN = 18;
+      const RH = 24;
+      const RO = 24;
+
+      let bpArrowId = 0;
+
+      function backArrow(fromX, fromY, toX, toY, color, width) {
+        const markerId = "bpArrowHead" + bpArrowId++;
+
+        const defs = el("defs", {});
+
+        const marker = el("marker", {
+          id: markerId,
+          viewBox: "0 0 10 10",
+          refX: 10,
+          refY: 5,
+          markerWidth: 9,
+          markerHeight: 9,
+          markerUnits: "userSpaceOnUse",
+          orient: "auto",
+        });
+
+        marker.appendChild(
+          el("path", {
+            d: "M 0 0 L 10 5 L 0 10 z",
+            fill: color,
+          }),
+        );
+
+        defs.appendChild(marker);
+
+        netSvg.appendChild(defs);
+
+        const ln = el("line", {
+          x1: fromX,
+          y1: fromY,
+          x2: toX,
+          y2: toY,
+          stroke: color,
+          "stroke-width": width,
+          "stroke-linecap": "round",
+          opacity: 0.92,
+          "marker-end": "url(#" + markerId + ")",
+        });
+
+        netSvg.appendChild(ln);
+      }
+
+      // Backprop arrow: a white-filled, red-outlined arrow
+      // that runs parallel to the hidden→output forward connection
+      function drawBackpropOutlineArrow(A, B, inwardOffset = 0) {
+        const dx = B.x - A.x;
+        const dy = B.y - A.y;
+        const L = Math.hypot(dx, dy) || 1;
+        const ux = dx / L;
+        const uy = dy / L;
+        const nx = -uy;
+        const ny = ux;
+
+        // Arrow in the middle of the connection, pointing backward
+        const nearOutputT = 0.76;
+        const nearHiddenT = 0.3;
+        const tail = {
+          x: A.x + dx * nearOutputT + nx * inwardOffset,
+          y: A.y + dy * nearOutputT + ny * inwardOffset,
+        };
+        const tip = {
+          x: A.x + dx * nearHiddenT + nx * inwardOffset,
+          y: A.y + dy * nearHiddenT + ny * inwardOffset,
+        };
+
+        const bdx = tip.x - tail.x;
+        const bdy = tip.y - tail.y;
+        const bL = Math.hypot(bdx, bdy) || 1;
+        const bux = bdx / bL;
+        const buy = bdy / bL;
+        const bnx = -buy;
+        const bny = bux;
+
+        const shaftHalf = 4.2;
+        const headHalf = 10.5;
+        const headLength = 18;
+        const headBase = {
+          x: tip.x - bux * headLength,
+          y: tip.y - buy * headLength,
+        };
+
+        const points = [
+          [tail.x + bnx * shaftHalf, tail.y + bny * shaftHalf],
+          [headBase.x + bnx * shaftHalf, headBase.y + bny * shaftHalf],
+          [headBase.x + bnx * headHalf, headBase.y + bny * headHalf],
+          [tip.x, tip.y],
+          [headBase.x - bnx * headHalf, headBase.y - bny * headHalf],
+          [headBase.x - bnx * shaftHalf, headBase.y - bny * shaftHalf],
+          [tail.x - bnx * shaftHalf, tail.y - bny * shaftHalf],
+        ]
+          .map((p) => p.join(","))
+          .join(" ");
+
+        netSvg.appendChild(
+          el("polygon", {
+            points,
+            fill: "#ffffff",
+            stroke: COLOR.err,
+            "stroke-width": phase === 4 ? 2.8 : 2.2,
+            "stroke-linejoin": "miter",
+            opacity: 0.98,
+          }),
+        );
+      }
+
+      function edgePts(A, B, ra, rb) {
+        const dx = B.x - A.x;
+        const dy = B.y - A.y;
+        const L = Math.hypot(dx, dy) || 1;
+        const ux = dx / L;
+        const uy = dy / L;
+
+        return {
+          ax: A.x + ux * ra,
+          ay: A.y + uy * ra,
+          bx: B.x - ux * rb,
+          by: B.y - uy * rb,
+        };
+      }
+
+      function listText(
+        x,
+        y,
+        text,
+        color,
+        size = 10,
+        weight = 500,
+        anchor = "start",
+        strokeWidth = 0,
+      ) {
+        const attrs = {
+          x,
+          y,
+          "text-anchor": anchor,
+          "font-size": size * FONT_SCALE,
+          "font-family": "Space Grotesk, Arial, sans-serif",
+          "font-weight": weight,
+          fill: color,
+        };
+
+        if (strokeWidth > 0) {
+          attrs.stroke = color;
+          attrs["stroke-width"] = strokeWidth;
+          attrs["paint-order"] = "stroke fill";
+        }
+
+        netSvg.appendChild(el("text", attrs, text));
+      }
+
+      function drawValueList(x, y, title, values, color, options = {}) {
+        const gap = (options.gap || 12) * GAP_SCALE;
+        const decimals = options.decimals ?? 2;
+        const highlight = !!options.highlight;
+        const strong = !!options.strong;
+        const anchor = options.anchor || "start";
+
+        const activeColor = highlight ? options.highlightColor || color : color;
+        const titleSize =
+          options.titleSize ?? (highlight ? (strong ? 13.5 : 12.5) : 10.5);
+        const valueSize =
+          options.valueSize ?? (highlight ? (strong ? 12.6 : 11.8) : 9.8);
+
+        const formatter =
+          options.formatter || ((v) => Number(v).toFixed(decimals));
+
+        listText(
+          x,
+          y,
+          title,
+          activeColor,
+          titleSize,
+          highlight ? (strong ? 800 : 700) : 700,
+          anchor,
+          highlight ? (strong ? 0.45 : 0.28) : 0,
+        );
+
+        values.forEach((v, i) =>
+          listText(
+            x,
+            y + gap * (i + 1),
+            formatter(v, i),
+            activeColor,
+            valueSize,
+            highlight ? (strong ? 800 : 700) : 500,
+            anchor,
+            highlight ? (strong ? 0.45 : 0.28) : 0,
+          ),
+        );
+      }
+
+      function drawLeaderArrow(fromX, fromY, toX, toY, color, options = {}) {
+        const startNudgeX = options.startNudgeX ?? 4;
+        const startNudgeY = options.startNudgeY ?? 0;
+        const endInset = options.endInset ?? 3;
+        const straight = options.straight ?? false;
+
+        const sx = fromX + startNudgeX;
+        const sy = fromY + startNudgeY;
+
+        let ex = toX;
+        let ey = toY;
+        let ux = 1;
+        let uy = 0;
+
+        if (straight) {
+          const dx = toX - sx;
+          const dy = toY - sy;
+          const L = Math.hypot(dx, dy) || 1;
+
+          ux = dx / L;
+          uy = dy / L;
+
+          ex = toX - ux * endInset;
+          ey = toY - uy * endInset;
+
+          netSvg.appendChild(
+            el("line", {
+              x1: sx,
+              y1: sy,
+              x2: ex,
+              y2: ey,
+              stroke: color,
+              "stroke-width": options.strokeWidth ?? 1.0,
+              "stroke-dasharray": "4 4",
+              "stroke-linecap": "round",
+              opacity: 0.9,
+            }),
+          );
+        } else {
+          const bend = options.bend ?? (toY < sy ? -28 : 28);
+
+          const dx = toX - sx;
+          const dy = toY - sy;
+
+          const dirX = dx >= 0 ? 1 : -1;
+
+          const cp1x = sx + dx * 0.28 + dirX * 8;
+
+          const cp1y = sy + bend;
+
+          const cp2x = toX - dx * 0.18 - dirX * 10;
+
+          const cp2y = toY - bend * 0.18;
+
+          const endDx = toX - cp2x;
+
+          const endDy = toY - cp2y;
+
+          const endLen = Math.hypot(endDx, endDy) || 1;
+
+          ux = endDx / endLen;
+          uy = endDy / endLen;
+
+          ex = toX - ux * endInset;
+
+          ey = toY - uy * endInset;
+
+          netSvg.appendChild(
+            el("path", {
+              d:
+                `M ${sx} ${sy} ` +
+                `C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${ex} ${ey}`,
+              fill: "none",
+              stroke: color,
+              "stroke-width": options.strokeWidth ?? 1.15,
+              "stroke-dasharray": "4 4",
+              "stroke-linecap": "round",
+              opacity: 0.9,
+            }),
+          );
+        }
+
+        const nx = -uy;
+        const ny = ux;
+        const size = options.headSize ?? 4.2;
+
+        netSvg.appendChild(
+          el("polygon", {
+            points:
+              ex +
+              "," +
+              ey +
+              " " +
+              (ex - ux * size + nx * size * 0.65) +
+              "," +
+              (ey - uy * size + ny * size * 0.65) +
+              " " +
+              (ex - ux * size - nx * size * 0.65) +
+              "," +
+              (ey - uy * size - ny * size * 0.65),
+            fill: color,
+            opacity: 0.9,
+          }),
+        );
+      }
+
+      function drawSolidTriangle(cx, cy, dir = "down", size = 7.5) {
+        // Orange arrowhead
+        const s = Math.max(size, 7);
+        let pts;
+        if (dir === "up") {
+          pts = [
+            [cx, cy - s],
+            [cx - s * 1.05, cy + s * 0.72],
+            [cx + s * 1.05, cy + s * 0.72],
+          ];
+        } else if (dir === "left") {
+          pts = [
+            [cx - s, cy],
+            [cx + s * 0.72, cy - s * 1.05],
+            [cx + s * 0.72, cy + s * 1.05],
+          ];
+        } else if (dir === "right") {
+          pts = [
+            [cx + s, cy],
+            [cx - s * 0.72, cy - s * 1.05],
+            [cx - s * 0.72, cy + s * 1.05],
+          ];
+        } else {
+          pts = [
+            [cx, cy + s],
+            [cx - s * 1.05, cy - s * 0.72],
+            [cx + s * 1.05, cy - s * 0.72],
+          ];
+        }
+        netSvg.appendChild(
+          el("polygon", {
+            points: pts.map((p) => p.join(",")).join(" "),
+            fill: "#f7c98a",
+            stroke: COLOR.grad,
+            "stroke-width": 1.4,
+            "stroke-linejoin": "miter",
+            opacity: 1,
+          }),
+        );
+      }
+
+      function drawDWList(x, y, values, total, targetX, targetY, options = {}) {
+        const gap = (options.gap || 9.5) * GAP_SCALE;
+        const highlight = phase === 5;
+        const anchor = options.anchor || "start";
+
+        listText(
+          x,
+          y,
+          "ΔW",
+          COLOR.grad,
+          highlight ? 10.2 : 8.9,
+          highlight ? 800 : 700,
+          anchor,
+        );
+
+        values.forEach((v, i) =>
+          listText(
+            x,
+            y + gap * (i + 1),
+            v.toFixed(3),
+            COLOR.grad,
+            highlight ? 8.7 : 7.8,
+            highlight ? 800 : 500,
+            anchor,
+          ),
+        );
+
+        const halfWidth = 16;
+        const lineY = y + gap * 4 + 3;
+
+        // Double horizontal line
+        netSvg.appendChild(
+          el("line", {
+            x1: x - halfWidth,
+            y1: lineY,
+            x2: x + halfWidth,
+            y2: lineY,
+            stroke: COLOR.grad,
+            "stroke-width": 0.9,
+            "stroke-dasharray": "4 2",
+          }),
+        );
+
+        netSvg.appendChild(
+          el("line", {
+            x1: x - halfWidth,
+            y1: lineY + 3,
+            x2: x + halfWidth,
+            y2: lineY + 3,
+            stroke: COLOR.grad,
+            "stroke-width": 0.9,
+            "stroke-dasharray": "4 2",
+          }),
+        );
+
+        listText(
+          x,
+          lineY + gap + 3,
+          total.toFixed(3),
+          COLOR.grad,
+          highlight ? 9.0 : 8.0,
+          highlight ? 800 : 700,
+          anchor,
+        );
+
+        if (options.triangleX != null && options.triangleY != null) {
+          drawSolidTriangle(
+            options.triangleX,
+            options.triangleY,
+            options.triangleDir || "down",
+            options.triangleSize ?? (highlight ? 8.5 : 7.2),
+          );
+        }
+      }
+
+      function drawAllCaseLabels(c, rev, disp) {
+        const showHiddenY = epoch > 0 || phase >= 1;
+        const showOutputY = epoch > 0 || phase >= 2;
+        const showOutputDelta = epoch > 0 || phase >= 3;
+        const showHiddenDelta = epoch > 0 || phase >= 4;
+        const showDW = epoch > 0 || phase >= 5;
+
+        // Input values: two compact, regular blocks beside x1/x2.
+        drawValueList(
+          190,
+          92,
+          "x₁",
+          PATTERNS.map((p) => p.x[0]),
+          COLOR.struct,
+          {
+            gap: 13,
+            formatter: (v, i) => "ABCD"[i] + ": " + (v > 0 ? "+1" : "−1"),
+            highlight: phase === 0,
+          },
+        );
+        drawValueList(
+          190,
+          297,
+          "x₂",
+          PATTERNS.map((p) => p.x[1]),
+          COLOR.struct,
+          {
+            gap: 13,
+            formatter: (v, i) => "ABCD"[i] + ": " + (v > 0 ? "+1" : "−1"),
+            highlight: phase === 0,
+          },
+        );
+
+        // Hidden-unit columns are symmetric around each neuron center
+
+        const hiddenErrorX = POS.hid[0].x - 43;
+        const hiddenOutputX = POS.hid[0].x + 50;
+        const lowerHiddenErrorX = POS.hid[1].x - 43;
+        const lowerHiddenOutputX = POS.hid[1].x + 50;
+
+        if (showHiddenDelta && displayState.dHid) {
+          drawValueList(
+            hiddenErrorX,
+            50,
+            "error (backprop)",
+            displayState.dHid[0],
+            COLOR.err,
+            {
+              gap: 12,
+              anchor: "middle",
+              titleSize: 7.6,
+              highlight: phase === 4,
+            },
+          );
+        }
+        if (showHiddenY && displayState.h) {
+          drawValueList(
+            hiddenOutputX,
+            50,
+            "output (y)",
+            displayState.h[0],
+            COLOR.ink,
+            {
+              gap: 12,
+              anchor: "middle",
+              titleSize: 8.8,
+              highlight: phase === 1,
+              highlightColor: COLOR.ink,
+            },
+          );
+        }
+
+        // Lower hidden
+        if (showHiddenDelta && displayState.dHid) {
+          drawValueList(
+            lowerHiddenErrorX,
+            422,
+            "error (backprop)",
+            displayState.dHid[1],
+            COLOR.err,
+            {
+              gap: 12,
+              anchor: "middle",
+              titleSize: 7.4,
+              highlight: phase === 4,
+            },
+          );
+        }
+        if (showHiddenY && displayState.h) {
+          drawValueList(
+            lowerHiddenOutputX,
+            422,
+            "output (y)",
+            displayState.h[1],
+            COLOR.ink,
+            {
+              gap: 12,
+              anchor: "middle",
+              titleSize: 8.0,
+              highlight: phase === 1,
+              highlightColor: COLOR.ink,
+            },
+          );
+        }
+
+        // Output-unit columns sit in a cleaner three-column row above the
+        // output neuron, with extra separation so the loss arrow does not cut
+        // through the labels
+        const outErrorX = 895;
+        const outOutputX = 968;
+        const outDX = 1055;
+        const outHeadY = 158;
+
+        if (showOutputDelta && displayState.E) {
+          drawValueList(
+            outErrorX,
+            outHeadY,
+            "error (y-d)",
+            displayState.E,
+            COLOR.err,
+            {
+              gap: 11.5,
+              anchor: "middle",
+              titleSize: 7.6,
+              valueSize: 9.6,
+              highlight: phase === 3,
+            },
+          );
+        }
+        if (showOutputY && displayState.o) {
+          drawValueList(
+            outOutputX,
+            outHeadY,
+            "output (y)",
+            displayState.o,
+            COLOR.ink,
+            {
+              gap: 11.5,
+              anchor: "middle",
+              titleSize: 8.2,
+              valueSize: 9.6,
+              highlight: phase === 2,
+              highlightColor: COLOR.ink,
+            },
+          );
+        }
+        drawValueList(
+          outDX,
+          outHeadY,
+          "desired output (d)",
+          PATTERNS.map((p) => p.d),
+          COLOR.struct,
+          {
+            gap: 11.5,
+            anchor: "middle",
+            titleSize: 7.2,
+            valueSize: 9.6,
+            formatter: (v) => (v > 0 ? "+1" : "−1"),
+            highlight: phase === 0,
+            highlightColor: "#1f6f2d",
+          },
+        );
+
+        if (!showDW || !displayState.caseDW || !displayState.pendingDW) return;
+
+        const cases = displayState.caseDW;
+        const shownDW = displayState.pendingDW;
+
+        // The blue labels and the ΔW pointers both use the same fixed weight positions
+        const WP = {
+          w00: { x: 455, y: 136 },
+          w01: { x: 385, y: 235 },
+          w10: { x: 385, y: 282 },
+          w11: { x: 455, y: 383 },
+          v0: { x: 820, y: 184 },
+          v1: { x: 820, y: 342 },
+          bh0: { x: 595, y: 207 },
+          bh1: { x: 595, y: 412 },
+          bo: { x: 895, y: 333 },
+        };
+
+        // ΔW blocks, narrow columns lined up with the
+        // blue weight they influence, separated by just a small filled triangle
+        drawDWList(
+          455,
+          24,
+          cases.w[0][0],
+          shownDW.w[0][0],
+          WP.w00.x,
+          WP.w00.y,
+          {
+            gap: 9.2,
+            anchor: "middle",
+            triangleX: 455,
+            triangleY: 109,
+            triangleDir: "down",
+            triangleSize: 5.5,
+          },
+        );
+
+        drawDWList(
+          462,
+          164,
+          cases.w[0][1],
+          shownDW.w[0][1],
+          WP.w01.x,
+          WP.w01.y,
+          {
+            gap: 9.2,
+            anchor: "middle",
+            triangleX: 426,
+            triangleY: 235,
+            triangleDir: "left",
+            triangleSize: 5.5,
+          },
+        );
+
+        drawDWList(
+          306,
+          222,
+          cases.w[1][0],
+          shownDW.w[1][0],
+          WP.w10.x,
+          WP.w10.y,
+          {
+            gap: 9.2,
+            anchor: "middle",
+            triangleX: 344,
+            triangleY: 282,
+            triangleDir: "right",
+            triangleSize: 5.5,
+          },
+        );
+
+        drawDWList(
+          455,
+          420,
+          cases.w[1][1],
+          shownDW.w[1][1],
+          WP.w11.x,
+          WP.w11.y,
+          {
+            gap: 9.2,
+            anchor: "middle",
+            triangleX: 455,
+            triangleY: 392,
+            triangleDir: "up",
+            triangleSize: 5.5,
+          },
+        );
+
+        drawDWList(836, 80, cases.v[0], shownDW.v[0], WP.v0.x, WP.v0.y, {
+          gap: 9.2,
+          anchor: "middle",
+          triangleX: 840,
+          triangleY: 160,
+          triangleDir: "down",
+        });
+
+        drawDWList(820, 382, cases.v[1], shownDW.v[1], WP.v1.x, WP.v1.y, {
+          gap: 9.2,
+          anchor: "middle",
+          triangleX: 820,
+          triangleY: 354,
+          triangleDir: "up",
+        });
+
+        // The Bias ΔW columns are kept compact and joined with a solid side triangle,
+        // rather than with a dashed leader line
+        drawDWList(642, 239, cases.bh[0], shownDW.bh[0], WP.bh0.x, WP.bh0.y, {
+          gap: 8.9,
+          anchor: "middle",
+          triangleX: 642,
+          triangleY: 213,
+          triangleDir: "up",
+        });
+
+        drawDWList(538, 398, cases.bh[1], shownDW.bh[1], WP.bh1.x, WP.bh1.y, {
+          gap: 8.9,
+          anchor: "middle",
+          triangleX: 586,
+          triangleY: 388,
+          triangleDir: "right",
+        });
+
+        drawDWList(956, 350, cases.bo, shownDW.bo, WP.bo.x, WP.bo.y, {
+          gap: 8.9,
+          anchor: "middle",
+          triangleX: 956,
+          triangleY: 325,
+          triangleDir: "up",
+          triangleSize: 5.5,
+        });
+      }
+
+      function drawXORSchematic() {
+        const gx = 28,
+          gy = 158,
+          s = 132;
+        listText(62, 82, "XOR", COLOR.struct, 23, 500);
+        listText(38, 106, "desired = +1", COLOR.fwd, 11.5, 600);
+        listText(38, 124, "desired = −1", COLOR.grad, 11.5, 600);
+
+        netSvg.appendChild(
+          el("rect", {
+            x: gx,
+            y: gy,
+            width: s,
+            height: s,
+            fill: "#f3f3f3",
+            stroke: "#73777d",
+            "stroke-width": 1,
+          }),
+        );
+        netSvg.appendChild(
+          el("line", {
+            x1: gx + s / 2,
+            y1: gy,
+            x2: gx + s / 2,
+            y2: gy + s,
+            stroke: "#73777d",
+            "stroke-width": 1,
+          }),
+        );
+        netSvg.appendChild(
+          el("line", {
+            x1: gx,
+            y1: gy + s / 2,
+            x2: gx + s,
+            y2: gy + s / 2,
+            stroke: "#73777d",
+            "stroke-width": 1,
+          }),
+        );
+
+        const pts = [
+          {
+            n: "A",
+            x: gx + s * 0.25,
+            y: gy + s * 0.75,
+            d: -1,
+            lx: -15,
+            ly: 15,
+            anchor: "end",
+          },
+          {
+            n: "B",
+            x: gx + s * 0.75,
+            y: gy + s * 0.75,
+            d: 1,
+            lx: 15,
+            ly: 15,
+            anchor: "start",
+          },
+          {
+            n: "C",
+            x: gx + s * 0.25,
+            y: gy + s * 0.25,
+            d: 1,
+            lx: -15,
+            ly: -8,
+            anchor: "end",
+          },
+          {
+            n: "D",
+            x: gx + s * 0.75,
+            y: gy + s * 0.25,
+            d: -1,
+            lx: 15,
+            ly: -8,
+            anchor: "start",
+          },
+        ];
+        pts.forEach((p) => {
+          netSvg.appendChild(
+            el("circle", {
+              cx: p.x,
+              cy: p.y,
+              r: 7.5,
+              fill: p.d > 0 ? COLOR.fwd : COLOR.grad,
+              stroke: "#555",
+              "stroke-width": 0.7,
+            }),
+          );
+          listText(
+            p.x + p.lx,
+            p.y + p.ly,
+            p.n,
+            COLOR.struct,
+            10.5,
+            800,
+            p.anchor,
+          );
+        });
+        listText(
+          gx + s / 2,
+          gy + s + 29,
+          "x₁",
+          COLOR.struct,
+          11.5,
+          700,
+          "middle",
+        );
+        listText(
+          gx - 22,
+          gy + s / 2 + 4,
+          "x₂",
+          COLOR.struct,
+          11.5,
+          700,
+          "middle",
+        );
+        listText(
+          gx + s * 0.25,
+          gy + s + 14,
+          "−1",
+          COLOR.ink,
+          8.7,
+          600,
+          "middle",
+        );
+        listText(
+          gx + s * 0.75,
+          gy + s + 14,
+          "+1",
+          COLOR.ink,
+          8.7,
+          600,
+          "middle",
+        );
+        listText(gx - 8, gy + s * 0.25 + 3, "+1", COLOR.ink, 8.7, 600, "end");
+        listText(gx - 8, gy + s * 0.75 + 3, "−1", COLOR.ink, 8.7, 600, "end");
+      }
+
+      function outputMapColor(v) {
+        const a = Math.min(1, Math.abs(v));
+        const target = v >= 0 ? [31, 79, 216] : [232, 137, 12];
+        const k = 0.18 + 0.7 * a;
+        const rgb = target.map((c) => Math.round(255 * (1 - k) + c * k));
+        return `rgb(${rgb[0]},${rgb[1]},${rgb[2]})`;
+      }
+
+      function drawOutputMapUnit(x, y, kind, index = 0) {
+        const size = 52,
+          cells = 9,
+          cell = size / cells;
+        const x0 = x - size / 2,
+          y0 = y - size / 2;
+        const g = el("g", {});
+        for (let iy = 0; iy < cells; iy++) {
+          for (let ix = 0; ix < cells; ix++) {
+            const x1 = -1.25 + (2.5 * ix) / (cells - 1);
+            const x2 = 1.25 - (2.5 * iy) / (cells - 1);
+            let v;
+            if (kind === "hidden") {
+              v = tanh(
+                net.bh[index] + net.w[0][index] * x1 + net.w[1][index] * x2,
+              );
+            } else {
+              v = forward(net, [x1, x2]).o;
+            }
+            g.appendChild(
+              el("rect", {
+                x: x0 + ix * cell,
+                y: y0 + iy * cell,
+                width: cell + 0.3,
+                height: cell + 0.3,
+                fill: outputMapColor(v),
+                stroke: "none",
+              }),
+            );
+          }
+        }
+        g.appendChild(
+          el("rect", {
+            x: x0,
+            y: y0,
+            width: size,
+            height: size,
+            fill: "none",
+            stroke: "#7d8793",
+            "stroke-width": 1.2,
+          }),
+        );
+        const corners = [
+          { x: x0 + 6, y: y0 + size - 6, d: -1 },
+          { x: x0 + size - 6, y: y0 + size - 6, d: 1 },
+          { x: x0 + 6, y: y0 + 6, d: 1 },
+          { x: x0 + size - 6, y: y0 + 6, d: -1 },
+        ];
+        corners.forEach((p) =>
+          g.appendChild(
+            el("circle", {
+              cx: p.x,
+              cy: p.y,
+              r: 2.6,
+              fill: p.d > 0 ? COLOR.fwd : COLOR.grad,
+              stroke: "#fff",
+              "stroke-width": 0.6,
+            }),
+          ),
+        );
+        netSvg.appendChild(g);
+      }
+
+      function drawNet() {
+        const c = currentComputed();
+        const rev = PHASES[phase].reveal;
+        netSvg.innerHTML = "";
+        bpArrowId = 0;
+
+        const defs = el("defs", {});
+        const marker = el("marker", {
+          id: "forwardArrowHead",
+          viewBox: "0 0 10 10",
+          refX: 9.2,
+          refY: 5,
+          markerWidth: 8.5,
+          markerHeight: 8.5,
+          markerUnits: "userSpaceOnUse",
+          orient: "auto",
+        });
+        marker.appendChild(
+          el("path", {
+            d: "M 0 0 L 10 5 L 0 10 z",
+            fill: COLOR.ink,
+            stroke: COLOR.ink,
+            "stroke-width": 0.5,
+            "stroke-linejoin": "miter",
+          }),
+        );
+        defs.appendChild(marker);
+
+        const cleanMarker = el("marker", {
+          id: "cleanForwardArrowHead",
+          viewBox: "0 0 12 10",
+          refX: 11,
+          refY: 5,
+          markerWidth: 9,
+          markerHeight: 9,
+          markerUnits: "userSpaceOnUse",
+          orient: "auto",
+        });
+        cleanMarker.appendChild(
+          el("path", {
+            d: "M 0.5 1 L 11 5 L 0.5 9 z",
+            fill: COLOR.ink,
+            stroke: COLOR.ink,
+            "stroke-width": 0.35,
+            "stroke-linejoin": "miter",
+          }),
+        );
+        defs.appendChild(cleanMarker);
+
+        netSvg.appendChild(defs);
+
+        drawXORSchematic();
+
+        const leftContact = (node, r, yOffset) => ({
+          x: node.x - Math.sqrt(Math.max(0, r * r - yOffset * yOffset)),
+          y: node.y + yOffset,
+        });
+
+        // Forward arrows. Weight labels, fixed positions for a regular layout
+        const WP = {
+          w00: { x: 455, y: 136 },
+          w01: { x: 385, y: 235 },
+          w10: { x: 385, y: 282 },
+          w11: { x: 455, y: 383 },
+          v0: { x: 820, y: 184 },
+          v1: { x: 820, y: 342 },
+        };
+
+        for (let i = 0; i < 2; i++) {
+          for (let j = 0; j < 2; j++) {
+            const a = POS.in[i],
+              b = POS.hid[j];
+
+            // Incoming arrowheads visually separated
+            let inputOffset;
+            if (j === 0) {
+              inputOffset = i === 0 ? -7 : 2;
+            } else {
+              inputOffset = i === 0 ? -7 : 0;
+            }
+
+            const end = leftContact(b, RH, inputOffset);
+            const sx = a.x + 11,
+              sy = a.y;
+            netSvg.appendChild(
+              el("line", {
+                x1: sx,
+                y1: sy,
+                x2: end.x,
+                y2: end.y,
+                stroke: COLOR.ink,
+                "stroke-width": 1.25,
+                "marker-end":
+                  j === 0
+                    ? "url(#cleanForwardArrowHead)"
+                    : "url(#forwardArrowHead)",
+              }),
+            );
+            const key = `w${i}${j}`,
+              q = WP[key];
+            listText(
+              q.x,
+              q.y,
+              fmt(net.w[i][j], 3),
+              COLOR.fwd,
+              phase === 6 ? 14 : 12,
+              phase === 6 ? 800 : 700,
+              "middle",
+            );
+          }
+        }
+
+        for (let j = 0; j < 2; j++) {
+          const a = POS.hid[j],
+            end = leftContact(POS.out, RO, j === 0 ? -9 : 2),
+            sx = a.x + RH,
+            sy = a.y;
+          netSvg.appendChild(
+            el("line", {
+              x1: sx,
+              y1: sy,
+              x2: end.x,
+              y2: end.y,
+              stroke: COLOR.ink,
+              "stroke-width": 1.25,
+              "marker-end": "url(#cleanForwardArrowHead)",
+            }),
+          );
+          const q = WP[`v${j}`];
+          listText(
+            q.x,
+            q.y,
+            fmt(net.v[j], 3),
+            COLOR.fwd,
+            phase === 6 ? 14 : 12,
+            phase === 6 ? 800 : 700,
+            "middle",
+          );
+        }
+
+        // Red backpropagation arrows: hollow,
+        //  running parallel to the hidden→output links, and offset inward between the pair of lines
+        if (rev.arrV) {
+          drawBackpropOutlineArrow(POS.hid[0], POS.out, 15);
+          drawBackpropOutlineArrow(POS.hid[1], POS.out, -15);
+        }
+
+        POS.in.forEach((n) => {
+          netSvg.appendChild(
+            el("rect", {
+              x: n.x - 11,
+              y: n.y - 11,
+              width: 22,
+              height: 22,
+              fill: "#000",
+              stroke: "#000",
+              "stroke-width": 1,
+            }),
+          );
+          listText(
+            n.x - 28,
+            n.y - 18,
+            n.label,
+            COLOR.struct,
+            14,
+            700,
+            "middle",
+          );
+        });
+
+        POS.hid.forEach((n, j) => {
+          if (outputMaps) drawOutputMapUnit(n.x, n.y, "hidden", j);
+          else drawUnit(n.x, n.y, RH, null, false, null, phase === 1);
+          drawBias(n.x, n.y, RH, net.bh[j]);
+        });
+        if (outputMaps) drawOutputMapUnit(POS.out.x, POS.out.y, "output", 0);
+        else
+          drawUnit(
+            POS.out.x,
+            POS.out.y,
+            RO,
+            null,
+            true,
+            null,
+            phase === 2 || phase === 3,
+          );
+        drawBias(POS.out.x, POS.out.y, RO, net.bo);
+
+        drawAllCaseLabels(c, rev, null);
+      }
+
+      function drawUnit(x, y, r, val, isOut, tipHtml, highlight = false) {
+        const g = el("g", {});
+        g.appendChild(
+          el("circle", {
+            cx: x,
+            cy: y,
+            r,
+            fill: "#fff",
+            stroke: "#7d8793",
+            "stroke-width": 1.7,
+          }),
+        );
+        g.appendChild(
+          el("line", {
+            x1: x - 13,
+            y1: y,
+            x2: x + 13,
+            y2: y,
+            stroke: "#a3aab4",
+            "stroke-width": 0.65,
+          }),
+        );
+        g.appendChild(
+          el("line", {
+            x1: x,
+            y1: y - 10,
+            x2: x,
+            y2: y + 10,
+            stroke: "#a3aab4",
+            "stroke-width": 0.65,
+          }),
+        );
+        let d = "";
+        const steps = 28;
+        for (let i = 0; i <= steps; i++) {
+          const tt = -2.2 + (4.4 * i) / steps,
+            px = x - 13 + (26 * i) / steps,
+            py = y - Math.tanh(tt) * 8;
+          d += (i === 0 ? "M " : " L ") + px.toFixed(2) + " " + py.toFixed(2);
+        }
+        g.appendChild(
+          el("path", {
+            d,
+            fill: "none",
+            stroke: "#4a5566",
+            "stroke-width": 1.55,
+            "stroke-linecap": "round",
+            "stroke-linejoin": "round",
+          }),
+        );
+        netSvg.appendChild(g);
+      }
+
+      function drawBias(x, neuronY, r, val) {
+        let cfg;
+
+        // Top hidden neuron
+        if (x === POS.hid[0].x && neuronY === POS.hid[0].y) {
+          cfg = {
+            plusX: x - 88,
+            plusY: neuronY + 90,
+
+            // Vertical stem and diagonal segment
+            stemX: x - 88,
+            stemTopY: neuronY + 55,
+
+            // Arrowhead touches the neuron boundary
+            tx: x - r + 2,
+            ty: neuronY + 10,
+
+            weightX: x - 30,
+            weightY: neuronY + 48,
+          };
+
+          // Bottom hidden neuron
+        } else if (x === POS.hid[1].x && neuronY === POS.hid[1].y) {
+          cfg = {
+            plusX: x - 96,
+            plusY: neuronY + 82,
+
+            stemX: x - 96,
+            stemTopY: neuronY + 40,
+
+            // Arrowhead touches the neuron boundary
+            tx: x - r + 2,
+            ty: neuronY + 10,
+
+            // The bias weight is positioned beneath the diagonal arrow,
+            // offset left and downward to avoid overlapping labels
+            weightX: x - 42,
+            weightY: neuronY + 48,
+          };
+
+          // Output neuron
+        } else {
+          cfg = {
+            plusX: x - 58,
+            plusY: neuronY + 78,
+
+            stemX: x - 58,
+            stemTopY: neuronY + 38,
+
+            tx: x - r + 2,
+            ty: neuronY + 10,
+
+            weightX: x - 20,
+            weightY: neuronY + 48,
+          };
+        }
+
+        const stemBottomY =
+          x === POS.hid[0].x && neuronY === POS.hid[0].y
+            ? neuronY + 79
+            : x === POS.hid[1].x && neuronY === POS.hid[1].y
+              ? neuronY + 64
+              : neuronY + 60;
+
+        // vertical segment, then one diagonal segment into the neuron.
+        netSvg.appendChild(
+          el("path", {
+            d: `M ${cfg.stemX} ${stemBottomY} L ${cfg.stemX} ${cfg.stemTopY} L ${cfg.tx} ${cfg.ty}`,
+            fill: "none",
+            stroke: COLOR.ink,
+            "stroke-width": 1.35,
+            "stroke-linecap": "round",
+            "stroke-linejoin": "round",
+            "marker-end": "url(#forwardArrowHead)",
+          }),
+        );
+
+        // +1 bias input
+        listText(cfg.plusX, cfg.plusY, "+1", COLOR.struct, 13.2, 800, "middle");
+
+        // Bias weight
+        listText(
+          cfg.weightX,
+          cfg.weightY,
+          fmt(val, 3),
+          COLOR.fwd,
+          phase === 6 ? 14.5 : 12.5,
+          phase === 6 ? 800 : 700,
+          "middle",
+        );
+      }
+
+      function updateLossLinkArrow() {
+        const overlay = document.getElementById("lossLinkArrow");
+        const path = document.getElementById("lossLinkPath");
+        const lossBox = document.querySelector(".network-loss");
+
+        if (!overlay || !path || !lossBox) return;
+
+        const showDelta = epoch > 0 || phase >= 3;
+        if (!showDelta || !displayState.E || window.innerWidth <= 1050) {
+          overlay.style.display = "none";
+          return;
+        }
+
+        const ctm = netSvg.getScreenCTM();
+        if (!ctm) {
+          overlay.style.display = "none";
+          return;
+        }
+        // Begin at the output error column, then bend the line into
+        // the Loss so the arrow resembles the other arrows in the diagram more closely.
+        const source = netSvg.createSVGPoint();
+        // Align the arrow’s starting point directly over the output error (delta) column.
+        source.x = 900;
+        source.y = 138;
+        const s = source.matrixTransform(ctm);
+
+        const r = lossBox.getBoundingClientRect();
+        const sx = s.x;
+        const sy = s.y;
+        const tx = r.left + 3;
+        const ty = r.top + 52;
+
+        overlay.setAttribute(
+          "viewBox",
+          `0 0 ${window.innerWidth} ${window.innerHeight}`,
+        );
+
+        // Vertical rise from delta, then a horizontal run into the loss box.
+        const elbowY = ty;
+
+        path.setAttribute("d", `M ${sx} ${sy} L ${sx} ${elbowY} L ${tx} ${ty}`);
+        overlay.style.display = "block";
+      }
+
+      window.addEventListener("resize", () =>
+        requestAnimationFrame(updateLossLinkArrow),
+      );
+      window.addEventListener(
+        "scroll",
+        () => requestAnimationFrame(updateLossLinkArrow),
+        true,
+      );
+
+      function drawResults() {
+        const showLoss = epoch > 0 || phase >= 3;
+
+        document.getElementById("lossVal").textContent =
+          !showLoss || displayState.loss == null
+            ? "—"
+            : displayState.loss.toFixed(2);
+
+        drawLossCurve();
+        requestAnimationFrame(updateLossLinkArrow);
+      }
+
+      const lossCv = document.getElementById("lossCanvas");
+
+      const lctx = lossCv.getContext("2d");
+
+      function drawLossCurve() {
+        const W = lossCv.width;
+        const H = lossCv.height;
+        lctx.clearRect(0, 0, W, H);
+
+        const left = 49;
+        const right = W - 14;
+        const top = 15;
+        const bottom = H - 38;
+
+        // Axes and labels style
+        lctx.strokeStyle = "#777";
+        lctx.lineWidth = 1.5;
+        lctx.beginPath();
+        lctx.moveTo(left, top);
+        lctx.lineTo(left, bottom);
+        lctx.lineTo(right, bottom);
+        lctx.stroke();
+
+        lctx.fillStyle = "#111";
+        lctx.font = "18px 'Space Grotesk'";
+        lctx.textAlign = "center";
+        lctx.fillText("Epoch", (left + right) / 2, H - 8);
+
+        lctx.save();
+        lctx.translate(22, (top + bottom) / 2);
+        lctx.rotate(-Math.PI / 2);
+        lctx.fillText("Loss", 0, 0);
+        lctx.restore();
+
+        if (lossHist.length < 1) {
+          return;
+        }
+
+        const max = Math.max(...lossHist, 0.5);
+        const n = lossHist.length;
+
+        lctx.beginPath();
+        lctx.lineWidth = 2.2;
+        lctx.strokeStyle = "#ff1c0d";
+
+        for (let i = 0; i < n; i++) {
+          const x =
+            n === 1 ? left + 2 : left + 2 + (i / (n - 1)) * (right - left - 5);
+          const y = bottom - 3 - (lossHist[i] / max) * (bottom - top - 8);
+          if (i === 0) lctx.moveTo(x, y);
+          else lctx.lineTo(x, y);
+        }
+        lctx.stroke();
+
+        document.getElementById("lossEnd").textContent = "epoch " + epoch;
+      }
+
+      function drawPhaseBar() {
+        const current = PHASES[phase];
+
+        const nextIndex = phase < PHASES.length - 1 ? phase + 1 : 0;
+
+        const next = PHASES[nextIndex];
+
+        const nextTitle =
+          phase < PHASES.length - 1 ? next.title : "Start the next epoch";
+
+        document.getElementById("tipNow").innerHTML =
+          "This: <b>" + current.k + ".</b> " + current.title;
+
+        document.getElementById("tipNext").innerHTML =
+          "Next: <b>" + next.k + ".</b> " + nextTitle;
+
+        document.getElementById("currentStepLabel").innerHTML =
+          "step <b>" + current.k + "</b>";
+      }
+
+      function drawPatSel() {
+        const s = document.getElementById("patSel");
+
+        if (!s) return;
+
+        s.innerHTML = "";
+
+        PATTERNS.forEach((p, i) => {
+          const label = document.createElement("span");
+
+          label.className = "pat-label" + (i === selPat ? " active" : "");
+
+          label.textContent = p.name;
+
+          label.onclick = () => {
+            selPat = i;
+            renderAll();
+          };
+
+          s.appendChild(label);
+        });
+      }
+
+      function updateStatus() {
+        const c = currentComputed();
+
+        let correct = 0;
+
+        c.res.forEach((r) => {
+          if (Math.sign(r.o) === Math.sign(r.d)) {
+            correct++;
+          }
+        });
+
+        const pill = document.getElementById("statusPill");
+
+        const txt = document.getElementById("statusText");
+
+        if (!pill || !txt) return;
+
+        if (correct === 4) {
+          pill.className = "pill solved";
+
+          txt.innerHTML = "Solved! XOR solved completely.";
+        } else if (epoch === 0 && !lossHist.length) {
+          pill.className = "pill neutral";
+
+          txt.innerHTML = "Press <b>Next Step</b> or <b>Train One Epoch</b>";
+        }
+      }
+
+      function renderAll() {
+        drawPatSel();
+        drawNet();
+        drawResults();
+        drawPhaseBar();
+        updateStatus();
+
+        document.getElementById("epochCount").textContent = epoch;
+
+        document.getElementById("btnPrev").disabled = history.length === 0;
+      }
+
+      function nextStep() {
+        history.push(snapshot());
+
+        if (phase < PHASES.length - 1) {
+          phase++;
+
+          if (phase === 6) {
+            const c = currentComputed();
+
+            lossHist.push(c.loss);
+
+            applyUpdate(net, c.g);
+
+            epoch++;
+          } else {
+            updateDisplayForPhase(phase);
+          }
+        } else {
+          phase = 0;
+        }
+
+        if (history.length > 400) {
+          history.shift();
+        }
+
+        renderAll();
+      }
+
+      function prevStep() {
+        if (!history.length) {
+          return;
+        }
+
+        restore(history.pop());
+
+        renderAll();
+      }
+
+      function trainEpochs(k) {
+        const targetEpoch = epoch + k;
+
+        while (epoch < targetEpoch) {
+          if (phase === PHASES.length - 1) {
+            history.push(snapshot());
+
+            phase = 0;
+
+            if (history.length > 400) {
+              history.shift();
+            }
+          }
+
+          while (phase < PHASES.length - 1 && epoch < targetEpoch) {
+            history.push(snapshot());
+
+            phase++;
+
+            if (phase === 6) {
+              const c = currentComputed();
+
+              lossHist.push(c.loss);
+
+              applyUpdate(net, c.g);
+
+              epoch++;
+            } else {
+              updateDisplayForPhase(phase);
+            }
+
+            if (history.length > 400) {
+              history.shift();
+            }
+          }
+        }
+
+        if (lossHist.length > 4000) {
+          lossHist.splice(0, lossHist.length - 4000);
+        }
+
+        renderAll();
+      }
+
+      function reset() {
+        stopRun();
+
+        net = newNet();
+        epoch = 0;
+        phase = 0;
+        lossHist = [];
+        history = [];
+        displayState = newDisplayState();
+        selPat = 0;
+        lastApplied = null;
+        lastAppliedCases = null;
+
+        renderAll();
+      }
+
+      function stopRun() {
+        if (running) {
+          clearInterval(running);
+
+          running = null;
+
+          document.getElementById("btnRun").innerHTML = "▶ Auto-train";
+        }
+      }
+
+      function toggleRun() {
+        if (running) {
+          stopRun();
+          return;
+        }
+
+        document.getElementById("btnRun").innerHTML = "⏸ Stop";
+
+        const spd = 60;
+
+        running = setInterval(
+          () => {
+            trainEpochs(1);
+
+            if (currentComputed().loss <= 0.01) {
+              stopRun();
+            }
+          },
+          Math.max(5, 1000 / spd),
+        );
+      }
+
+      document.getElementById("btnNext").onclick = () => {
+        stopRun();
+        nextStep();
+      };
+
+      document.getElementById("btnPrev").onclick = () => {
+        stopRun();
+        prevStep();
+      };
+
+      document.getElementById("btnEpoch1").onclick = () => {
+        stopRun();
+        trainEpochs(1);
+      };
+
+      document.getElementById("btnEpoch10").onclick = () => {
+        stopRun();
+        trainEpochs(10);
+      };
+
+      document.getElementById("btnRun").onclick = toggleRun;
+
+      document.getElementById("btnReset").onclick = reset;
+
+      document.getElementById("outputMapsToggle").onchange = (e) => {
+        outputMaps = e.target.checked;
+        renderAll();
+      };
+
+      lr = LR;
+      momentum = MOMENTUM;
+
+      document.addEventListener("keydown", (e) => {
+        const typing = /^(INPUT|TEXTAREA)$/.test(e.target.tagName);
+
+        if (e.key === "ArrowRight") {
+          stopRun();
+          nextStep();
+        }
+
+        if (e.key === "ArrowLeft") {
+          stopRun();
+          prevStep();
+        }
+      });
+
+      reset();
+    </script>
+  </body>
+</html>

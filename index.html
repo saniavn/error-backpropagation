@@ -647,6 +647,7 @@
         height: 100%;
         min-width: 0;
         min-height: 0;
+        overflow: visible;
       }
 
       .graph-buttons {
@@ -707,6 +708,194 @@
         }
       }
 
+      /* Top controls and left step list */
+      .page-step-title {
+        margin: 0 0 10px;
+        text-align: center;
+        font-size: 34px;
+        line-height: 1.15;
+        font-weight: 500;
+        color: var(--ink);
+      }
+
+      .graph-buttons {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        align-items: center;
+        gap: 10px 16px;
+        position: static;
+        left: auto;
+        width: 100%;
+        margin: 0 0 14px;
+        padding-left: 0;
+      }
+
+      .graph-buttons .control-group,
+      .graph-buttons .step-nav-group {
+        align-items: center;
+      }
+
+      .graph-buttons .control-meta {
+        display: none;
+      }
+
+      .step-control {
+        padding-top: 0;
+      }
+
+      .tip,
+      .current-step-label {
+        display: none;
+      }
+
+      .graph-buttons .about-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        height: 44px;
+        min-width: 124px;
+      }
+
+      .stage-layout {
+        display: flex;
+        align-items: flex-start;
+        gap: 18px;
+        width: 100%;
+      }
+
+      .step-sidebar {
+        flex: 0 0 172px;
+        border: 1px solid #a5a5a5;
+        background: #efefef;
+      }
+
+      .step-item {
+        padding: 13px 12px;
+        border-bottom: 1px solid #a5a5a5;
+        font-size: 16px;
+        line-height: 1.22;
+        color: #222;
+        background: #efefef;
+      }
+
+      .step-item:last-child {
+        border-bottom: none;
+      }
+
+      .step-item.active {
+        background: #d3d3d3;
+      }
+
+      .step-item.danger {
+        color: #e21b1b;
+      }
+
+      .step-item.warn {
+        color: #d68413;
+      }
+
+      .step-item.info {
+        color: #1f4fd8;
+      }
+
+      .step-key {
+        font-weight: 400;
+      }
+
+      .viz-area {
+        position: relative;
+        flex: 1 1 auto;
+        min-width: 0;
+      }
+
+      .network-wrap {
+        width: 100%;
+        min-height: 0;
+        margin-inline: auto;
+        padding-right: 0;
+        overflow: visible;
+        height: auto;
+        max-height: none;
+        aspect-ratio: 1160 / 520;
+      }
+
+      .network-loss {
+        position: absolute;
+        top: 48px;
+        right: 14px;
+        width: 190px;
+        margin: 0 !important;
+        background: #fff;
+        z-index: 8;
+      }
+
+      .epoch-readout {
+        position: absolute;
+        top: -20px;
+        right: 14px;
+        width: 190px;
+        text-align: center;
+        font-size: 18px;
+        line-height: 1.1;
+        color: var(--ink);
+        z-index: 9;
+        pointer-events: none;
+      }
+
+      .epoch-readout .num {
+        display: block;
+        font-size: 23px;
+        margin-bottom: 2px;
+      }
+
+      .epoch-readout-spacer {
+        margin-left: auto;
+        min-width: 92px;
+        height: 47px;
+        flex: 0 0 92px;
+      }
+
+      .about-topbar {
+        display: none;
+      }
+
+      @media (max-width: 1100px) {
+        .page-step-title {
+          font-size: 28px;
+        }
+
+        .stage-layout {
+          flex-direction: column;
+        }
+
+        .step-sidebar {
+          width: 100%;
+          flex: 0 0 auto;
+        }
+
+        .network-loss {
+          position: relative;
+          top: auto;
+          right: auto;
+          margin: 0 0 10px auto !important;
+        }
+
+        .epoch-readout {
+          right: 0;
+        }
+      }
+
+      @media (max-width: 700px) {
+        .page-step-title {
+          font-size: 24px;
+        }
+
+        .graph-buttons {
+          justify-content: center;
+        }
+      }
+
       /* About page */
       .about-topbar {
         display: flex;
@@ -737,65 +926,11 @@
   <body>
     <div id="mathTip" class="math-tip"></div>
 
-    <div class="about-topbar">
-      <a class="about-btn" href="about.html">About</a>
-    </div>
-
     <div class="main-flex">
       <div class="panel center">
-        <div class="lossbox network-loss">
-          <div class="lab">
-            <span class="loss-title">Loss E</span>
-            <span class="loss-subtitle"> (sum-squared output error) </span>
-          </div>
-          <div class="val num" id="lossVal">—</div>
-          <canvas id="lossCanvas" width="242" height="180"></canvas>
-          <div class="lossaxis">
-            <span>start</span>
-            <span id="lossEnd">now</span>
-          </div>
-        </div>
-
-        <div class="network-wrap">
-          <svg
-            id="net"
-            viewBox="0 0 1160 520"
-            preserveAspectRatio="xMidYMid meet"
-            xmlns="http://www.w3.org/2000/svg"
-          ></svg>
-        </div>
-
-        <svg
-          class="loss-link-arrow"
-          id="lossLinkArrow"
-          aria-hidden="true"
-          style="display: none"
-        >
-          <defs>
-            <marker
-              id="lossArrowHead"
-              viewBox="0 0 12 12"
-              refX="10.5"
-              refY="6"
-              markerWidth="6"
-              markerHeight="6"
-              orient="auto"
-            >
-              <path d="M 0 0 L 12 6 L 0 12 z" fill="#ff1c0d"></path>
-            </marker>
-          </defs>
-
-          <path
-            id="lossLinkPath"
-            d=""
-            fill="none"
-            stroke="#ff1c0d"
-            stroke-width="4.2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            marker-end="url(#lossArrowHead)"
-          ></path>
-        </svg>
+        <h1 class="page-step-title" id="pageStepTitle">
+          Step a: Start of epoch
+        </h1>
 
         <div class="graph-buttons">
           <div class="control-group">
@@ -822,9 +957,6 @@
           </div>
 
           <div class="control-group">
-            <span class="control-meta">
-              <b id="epochCount" class="num">0</b> epochs
-            </span>
             <button class="train" id="btnEpoch1">Train 1 Epoch</button>
           </div>
 
@@ -843,6 +975,75 @@
             <input type="checkbox" id="outputMapsToggle" checked />
             <span>Output Maps</span>
           </label>
+
+          <a class="about-btn" href="about.html">About</a>
+
+          <div class="epoch-readout-spacer" aria-hidden="true"></div>
+        </div>
+
+        <div class="stage-layout">
+          <div class="step-sidebar" id="stepSidebar"></div>
+
+          <div class="viz-area">
+            <div class="epoch-readout">
+              <span id="epochCount" class="num">0</span>
+              <span>Epochs</span>
+            </div>
+
+            <div class="lossbox network-loss">
+              <div class="lab">
+                <span class="loss-title">Loss E</span>
+                <span class="loss-subtitle"> (sum-squared output error) </span>
+              </div>
+              <div class="val num" id="lossVal">—</div>
+              <canvas id="lossCanvas" width="242" height="180"></canvas>
+              <div class="lossaxis">
+                <span>start</span>
+                <span id="lossEnd">now</span>
+              </div>
+            </div>
+
+            <div class="network-wrap">
+              <svg
+                id="net"
+                viewBox="200 0 1160 520"
+                preserveAspectRatio="xMidYMid meet"
+                xmlns="http://www.w3.org/2000/svg"
+              ></svg>
+            </div>
+
+            <svg
+              class="loss-link-arrow"
+              id="lossLinkArrow"
+              aria-hidden="true"
+              style="display: none"
+            >
+              <defs>
+                <marker
+                  id="lossArrowHead"
+                  viewBox="0 0 12 12"
+                  refX="10.5"
+                  refY="6"
+                  markerWidth="6"
+                  markerHeight="6"
+                  orient="auto"
+                >
+                  <path d="M 0 0 L 12 6 L 0 12 z" fill="#ff1c0d"></path>
+                </marker>
+              </defs>
+
+              <path
+                id="lossLinkPath"
+                d=""
+                fill="none"
+                stroke="#ff1c0d"
+                stroke-width="4.2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                marker-end="url(#lossArrowHead)"
+              ></path>
+            </svg>
+          </div>
         </div>
 
         <div class="legend">
@@ -1744,7 +1945,7 @@
 
         // Input values: two compact, regular blocks beside x1/x2.
         drawValueList(
-          190,
+          205,
           92,
           "x₁",
           PATTERNS.map((p) => p.x[0]),
@@ -1756,7 +1957,7 @@
           },
         );
         drawValueList(
-          190,
+          205,
           297,
           "x₂",
           PATTERNS.map((p) => p.x[1]),
@@ -2031,12 +2232,12 @@
       }
 
       function drawXORSchematic() {
-        const gx = 28,
-          gy = 158,
-          s = 132;
-        listText(62, 82, "XOR", COLOR.struct, 23, 500);
-        listText(38, 106, "desired = +1", COLOR.fwd, 11.5, 600);
-        listText(38, 124, "desired = −1", COLOR.grad, 11.5, 600);
+        const gx = 248,
+          gy = 18,
+          s = 68;
+
+        listText(gx - 2, gy - 15, "desired = +1", COLOR.fwd, 7.2, 600);
+        listText(gx - 2, gy - 5, "desired = −1", COLOR.grad, 7.2, 600);
 
         netSvg.appendChild(
           el("rect", {
@@ -2076,8 +2277,8 @@
             x: gx + s * 0.25,
             y: gy + s * 0.75,
             d: -1,
-            lx: -15,
-            ly: 15,
+            lx: -10,
+            ly: 11,
             anchor: "end",
           },
           {
@@ -2085,8 +2286,8 @@
             x: gx + s * 0.75,
             y: gy + s * 0.75,
             d: 1,
-            lx: 15,
-            ly: 15,
+            lx: 10,
+            ly: 11,
             anchor: "start",
           },
           {
@@ -2094,8 +2295,8 @@
             x: gx + s * 0.25,
             y: gy + s * 0.25,
             d: 1,
-            lx: -15,
-            ly: -8,
+            lx: -10,
+            ly: -6,
             anchor: "end",
           },
           {
@@ -2103,17 +2304,18 @@
             x: gx + s * 0.75,
             y: gy + s * 0.25,
             d: -1,
-            lx: 15,
-            ly: -8,
+            lx: 10,
+            ly: -6,
             anchor: "start",
           },
         ];
+
         pts.forEach((p) => {
           netSvg.appendChild(
             el("circle", {
               cx: p.x,
               cy: p.y,
-              r: 7.5,
+              r: 5.2,
               fill: p.d > 0 ? COLOR.fwd : COLOR.grad,
               stroke: "#555",
               "stroke-width": 0.7,
@@ -2124,49 +2326,50 @@
             p.y + p.ly,
             p.n,
             COLOR.struct,
-            10.5,
+            7.5,
             800,
             p.anchor,
           );
         });
+
         listText(
           gx + s / 2,
-          gy + s + 29,
+          gy + s + 16,
           "x₁",
           COLOR.struct,
-          11.5,
+          7.8,
           700,
           "middle",
         );
         listText(
-          gx - 22,
-          gy + s / 2 + 4,
+          gx - 13,
+          gy + s / 2 + 2,
           "x₂",
           COLOR.struct,
-          11.5,
+          7.8,
           700,
           "middle",
         );
         listText(
           gx + s * 0.25,
-          gy + s + 14,
+          gy + s + 9,
           "−1",
           COLOR.ink,
-          8.7,
+          6.2,
           600,
           "middle",
         );
         listText(
           gx + s * 0.75,
-          gy + s + 14,
+          gy + s + 9,
           "+1",
           COLOR.ink,
-          8.7,
+          6.2,
           600,
           "middle",
         );
-        listText(gx - 8, gy + s * 0.25 + 3, "+1", COLOR.ink, 8.7, 600, "end");
-        listText(gx - 8, gy + s * 0.75 + 3, "−1", COLOR.ink, 8.7, 600, "end");
+        listText(gx - 5, gy + s * 0.25 + 2, "+1", COLOR.ink, 6.2, 600, "end");
+        listText(gx - 5, gy + s * 0.75 + 2, "−1", COLOR.ink, 6.2, 600, "end");
       }
 
       function outputMapColor(v) {
@@ -2702,20 +2905,77 @@
         const current = PHASES[phase];
 
         const nextIndex = phase < PHASES.length - 1 ? phase + 1 : 0;
-
         const next = PHASES[nextIndex];
 
+        const displayTitles = {
+          a: "Start of epoch",
+          b: "Calculate hidden unit values",
+          c: "Calculate output unit value (y)",
+          d: "Calculate output error (y-d)",
+          e: "Calculate hidden error (backprop)",
+          f: "Calculate weight deltas",
+          g: "Update the weights",
+        };
+
+        const currentTitle = displayTitles[current.k];
         const nextTitle =
-          phase < PHASES.length - 1 ? next.title : "Start the next epoch";
+          phase < PHASES.length - 1
+            ? displayTitles[next.k]
+            : "Start of the next epoch";
 
         document.getElementById("tipNow").innerHTML =
-          "This: <b>" + current.k + ".</b> " + current.title;
+          "This: <b>" + current.k + ".</b> " + currentTitle;
 
         document.getElementById("tipNext").innerHTML =
           "Next: <b>" + next.k + ".</b> " + nextTitle;
 
         document.getElementById("currentStepLabel").innerHTML =
           "step <b>" + current.k + "</b>";
+
+        document.getElementById("pageStepTitle").textContent =
+          "Step " + current.k + ": " + currentTitle;
+
+        document.title =
+          "XOR Backprop — Step " + current.k + ": " + currentTitle;
+      }
+
+      function renderStepSidebar() {
+        const sidebar = document.getElementById("stepSidebar");
+
+        if (!sidebar) return;
+
+        const labels = {
+          a: "start of epoch",
+          b: "calculate hidden unit values",
+          c: "calculate output unit value (y)",
+          d: "calculate output error (y-d)",
+          e: "calculate hidden error (backprop)",
+          f: "calculate weight deltas",
+          g: "update the weights",
+        };
+
+        sidebar.innerHTML = PHASES.map((p, i) => {
+          const active = i === phase ? " active" : "";
+          const tone =
+            p.k === "d" || p.k === "e"
+              ? " danger"
+              : p.k === "f"
+                ? " warn"
+                : p.k === "g"
+                  ? " info"
+                  : "";
+
+          return (
+            '<div class="step-item' +
+            active +
+            tone +
+            '"><span class="step-key">' +
+            p.k +
+            ":</span> " +
+            labels[p.k] +
+            "</div>"
+          );
+        }).join("");
       }
 
       function drawPatSel() {
@@ -2774,6 +3034,7 @@
         drawNet();
         drawResults();
         drawPhaseBar();
+        renderStepSidebar();
         updateStatus();
 
         document.getElementById("epochCount").textContent = epoch;

@@ -1332,16 +1332,16 @@
         },
         {
           k: "b",
-          title: "Calculate hidden unit outputs (y)",
+          title: "Calculate hidden unit values (y)",
           back: false,
-          now: "Calculate hidden unit outputs (y).",
+          now: "Calculate hidden unit values (y).",
           reveal: { inputs: 1, h: 1 },
         },
         {
           k: "c",
-          title: "Calculate output unit output (y)",
+          title: "Calculate output unit value (y)",
           back: false,
-          now: "Calculate output unit output (y).",
+          now: "Calculate output unit value (y).",
           reveal: { inputs: 1, h: 1, o: 1 },
         },
         {
@@ -1689,21 +1689,28 @@
         const formatter =
           options.formatter || ((v) => Number(v).toFixed(decimals));
 
-        listText(
-          x,
-          y,
-          title,
-          activeColor,
-          titleSize,
-          highlight ? (strong ? 800 : 700) : 700,
-          anchor,
-          highlight ? (strong ? 0.45 : 0.28) : 0,
+        const titleLines = String(title).split("\n");
+        const titleLineGap = options.titleLineGap ?? 10;
+
+        titleLines.forEach((line, i) =>
+          listText(
+            x,
+            y + titleLineGap * i,
+            line,
+            activeColor,
+            titleSize,
+            highlight ? (strong ? 800 : 700) : 700,
+            anchor,
+            highlight ? (strong ? 0.45 : 0.28) : 0,
+          ),
         );
+
+        const valuesStartY = y + titleLineGap * (titleLines.length - 1);
 
         values.forEach((v, i) =>
           listText(
             x,
-            y + gap * (i + 1),
+            valuesStartY + gap * (i + 1),
             formatter(v, i),
             activeColor,
             valueSize,
@@ -1980,7 +1987,7 @@
           drawValueList(
             hiddenErrorX,
             50,
-            "error (backprop)",
+            "error\n(backprop)",
             displayState.dHid[0],
             COLOR.err,
             {
@@ -1995,7 +2002,7 @@
           drawValueList(
             hiddenOutputX,
             50,
-            "output (y)",
+            "value (y)",
             displayState.h[0],
             COLOR.ink,
             {
@@ -2013,7 +2020,7 @@
           drawValueList(
             lowerHiddenErrorX,
             422,
-            "error (backprop)",
+            "error\n(backprop)",
             displayState.dHid[1],
             COLOR.err,
             {
@@ -2028,7 +2035,7 @@
           drawValueList(
             lowerHiddenOutputX,
             422,
-            "output (y)",
+            "value (y)",
             displayState.h[1],
             COLOR.ink,
             {
@@ -2053,7 +2060,7 @@
           drawValueList(
             outErrorX,
             outHeadY,
-            "error (y-d)",
+            "error\n(y-d)",
             displayState.E,
             COLOR.err,
             {
@@ -2069,7 +2076,7 @@
           drawValueList(
             outOutputX,
             outHeadY,
-            "output (y)",
+            "value (y)",
             displayState.o,
             COLOR.ink,
             {
@@ -2085,7 +2092,7 @@
         drawValueList(
           outDX,
           outHeadY,
-          "desired output (d)",
+          "desired\noutput (d)",
           PATTERNS.map((p) => p.d),
           COLOR.struct,
           {

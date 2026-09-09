@@ -295,6 +295,7 @@
         flex: 0 0 auto;
         gap: 10px 18px;
         margin-top: 8px;
+        margin-left: 216px;
       }
 
       .lg {
@@ -727,7 +728,7 @@
         position: static;
         left: auto;
         width: 100%;
-        margin: 0 0 14px;
+        margin: 0 0 14px 14px;
         padding-left: 0;
       }
 
@@ -760,14 +761,14 @@
       .stage-layout {
         display: flex;
         align-items: flex-start;
-        gap: 18px;
+        gap: 24px;
         width: 100%;
       }
 
       .step-sidebar {
         flex: 0 0 172px;
         border: 1px solid #a5a5a5;
-        background: #efefef;
+        background: #ffffff;
       }
 
       .step-item {
@@ -776,11 +777,15 @@
         font-size: 16px;
         line-height: 1.22;
         color: #222;
-        background: #efefef;
+        background: #ffffff;
       }
 
       .step-item:last-child {
         border-bottom: none;
+      }
+
+      .step-item:first-child {
+        color: var(--struct);
       }
 
       .step-item.active {
@@ -823,7 +828,7 @@
       .network-loss {
         position: absolute;
         top: 48px;
-        right: 14px;
+        right: 22px;
         width: 190px;
         margin: 0 !important;
         background: #fff;
@@ -832,8 +837,8 @@
 
       .epoch-readout {
         position: absolute;
-        top: -20px;
-        right: 14px;
+        top: -5px;
+        right: 22px;
         width: 190px;
         text-align: center;
         font-size: 18px;
@@ -872,6 +877,10 @@
         .step-sidebar {
           width: 100%;
           flex: 0 0 auto;
+        }
+
+        .legend {
+          margin-left: 0;
         }
 
         .network-loss {
@@ -1049,7 +1058,7 @@
         <div class="legend">
           <span class="lg">
             <span class="dot" style="background: var(--fwd)"></span>
-            weights / signals forward →
+            weights
           </span>
 
           <span class="lg">
@@ -1074,7 +1083,7 @@
 
           <span class="lg">
             <span class="dot" style="background: var(--grad)"></span>
-            weight nudges ΔW
+            weight adjustments ΔW
           </span>
         </div>
       </div>
@@ -1679,6 +1688,8 @@
         const highlight = !!options.highlight;
         const strong = !!options.strong;
         const anchor = options.anchor || "start";
+        const valueAnchor = options.valueAnchor || anchor;
+        const valueX = options.valueX ?? x;
 
         const activeColor = highlight ? options.highlightColor || color : color;
         const titleSize =
@@ -1709,13 +1720,13 @@
 
         values.forEach((v, i) =>
           listText(
-            x,
+            valueX,
             valuesStartY + gap * (i + 1),
             formatter(v, i),
             activeColor,
             valueSize,
             highlight ? (strong ? 800 : 700) : 500,
-            anchor,
+            valueAnchor,
             highlight ? (strong ? 0.45 : 0.28) : 0,
           ),
         );
@@ -1872,6 +1883,7 @@
         const gap = (options.gap || 9.5) * GAP_SCALE;
         const highlight = phase === 5;
         const anchor = options.anchor || "start";
+        const valueX = x + 18;
 
         listText(
           x,
@@ -1885,20 +1897,19 @@
 
         values.forEach((v, i) =>
           listText(
-            x,
+            valueX,
             y + gap * (i + 1),
             v.toFixed(3),
             COLOR.grad,
             highlight ? 8.7 : 7.8,
             highlight ? 800 : 500,
-            anchor,
+            "end",
           ),
         );
 
         const halfWidth = 16;
         const lineY = y + gap * 4 + 3;
 
-        // Double horizontal line
         netSvg.appendChild(
           el("line", {
             x1: x - halfWidth,
@@ -1906,31 +1917,18 @@
             x2: x + halfWidth,
             y2: lineY,
             stroke: COLOR.grad,
-            "stroke-width": 0.9,
-            "stroke-dasharray": "4 2",
-          }),
-        );
-
-        netSvg.appendChild(
-          el("line", {
-            x1: x - halfWidth,
-            y1: lineY + 3,
-            x2: x + halfWidth,
-            y2: lineY + 3,
-            stroke: COLOR.grad,
-            "stroke-width": 0.9,
-            "stroke-dasharray": "4 2",
+            "stroke-width": 2.4,
           }),
         );
 
         listText(
-          x,
+          valueX,
           lineY + gap + 3,
           total.toFixed(3),
           COLOR.grad,
           highlight ? 9.0 : 8.0,
           highlight ? 800 : 700,
-          anchor,
+          "end",
         );
 
         if (options.triangleX != null && options.triangleY != null) {
@@ -1993,6 +1991,8 @@
             {
               gap: 12,
               anchor: "middle",
+              valueAnchor: "end",
+              valueX: hiddenErrorX + 18,
               titleSize: 7.6,
               highlight: phase === 4,
             },
@@ -2001,13 +2001,15 @@
         if (showHiddenY && displayState.h) {
           drawValueList(
             hiddenOutputX,
-            50,
-            "value (y)",
+            40,
+            "hidden\nunit\nvalue (y)",
             displayState.h[0],
             COLOR.ink,
             {
               gap: 12,
               anchor: "middle",
+              valueAnchor: "end",
+              valueX: hiddenOutputX + 18,
               titleSize: 8.8,
               highlight: phase === 1,
               highlightColor: COLOR.ink,
@@ -2019,13 +2021,15 @@
         if (showHiddenDelta && displayState.dHid) {
           drawValueList(
             lowerHiddenErrorX,
-            422,
+            434,
             "error\n(backprop)",
             displayState.dHid[1],
             COLOR.err,
             {
               gap: 12,
               anchor: "middle",
+              valueAnchor: "end",
+              valueX: lowerHiddenErrorX + 18,
               titleSize: 7.4,
               highlight: phase === 4,
             },
@@ -2034,13 +2038,15 @@
         if (showHiddenY && displayState.h) {
           drawValueList(
             lowerHiddenOutputX,
-            422,
-            "value (y)",
+            424,
+            "hidden\nunit\nvalue (y)",
             displayState.h[1],
             COLOR.ink,
             {
               gap: 12,
               anchor: "middle",
+              valueAnchor: "end",
+              valueX: lowerHiddenOutputX + 18,
               titleSize: 8.0,
               highlight: phase === 1,
               highlightColor: COLOR.ink,
@@ -2051,21 +2057,23 @@
         // Output-unit columns sit in a cleaner three-column row above the
         // output neuron, with extra separation so the loss arrow does not cut
         // through the labels
-        const outErrorX = 895;
+        const outErrorX = 905;
         const outOutputX = 968;
-        const outDX = 1055;
-        const outHeadY = 158;
+        const outDX = 1045;
+        const outHeadY = 143;
 
         if (showOutputDelta && displayState.E) {
           drawValueList(
             outErrorX,
-            outHeadY,
+            outHeadY + 10,
             "error\n(y-d)",
             displayState.E,
             COLOR.err,
             {
               gap: 11.5,
               anchor: "middle",
+              valueAnchor: "end",
+              valueX: outErrorX + 18,
               titleSize: 7.6,
               valueSize: 9.6,
               highlight: phase === 3,
@@ -2076,12 +2084,14 @@
           drawValueList(
             outOutputX,
             outHeadY,
-            "value (y)",
+            "output\nunit\nvalue (y)",
             displayState.o,
             COLOR.ink,
             {
               gap: 11.5,
               anchor: "middle",
+              valueAnchor: "end",
+              valueX: outOutputX + 18,
               titleSize: 8.2,
               valueSize: 9.6,
               highlight: phase === 2,
@@ -2091,13 +2101,15 @@
         }
         drawValueList(
           outDX,
-          outHeadY,
+          outHeadY + 10,
           "desired\noutput (d)",
           PATTERNS.map((p) => p.d),
           COLOR.struct,
           {
             gap: 11.5,
             anchor: "middle",
+            valueAnchor: "end",
+            valueX: outDX + 18,
             titleSize: 7.2,
             valueSize: 9.6,
             formatter: (v) => (v > 0 ? "+1" : "−1"),
@@ -2284,8 +2296,8 @@
             x: gx + s * 0.25,
             y: gy + s * 0.75,
             d: -1,
-            lx: -10,
-            ly: 11,
+            lx: -7,
+            ly: 8,
             anchor: "end",
           },
           {
@@ -2293,8 +2305,8 @@
             x: gx + s * 0.75,
             y: gy + s * 0.75,
             d: 1,
-            lx: 10,
-            ly: 11,
+            lx: 7,
+            ly: 8,
             anchor: "start",
           },
           {
@@ -2302,8 +2314,8 @@
             x: gx + s * 0.25,
             y: gy + s * 0.25,
             d: 1,
-            lx: -10,
-            ly: -6,
+            lx: -7,
+            ly: -3,
             anchor: "end",
           },
           {
@@ -2311,8 +2323,8 @@
             x: gx + s * 0.75,
             y: gy + s * 0.25,
             d: -1,
-            lx: 10,
-            ly: -6,
+            lx: 7,
+            ly: -3,
             anchor: "start",
           },
         ];
@@ -2728,9 +2740,7 @@
             tx: x - r + 2,
             ty: neuronY + 10,
 
-            // The bias weight is positioned beneath the diagonal arrow,
-            // offset left and downward to avoid overlapping labels
-            weightX: x - 42,
+            weightX: x - 30,
             weightY: neuronY + 48,
           };
 
@@ -2942,6 +2952,17 @@
         document.getElementById("pageStepTitle").textContent =
           "Step " + current.k + ": " + currentTitle;
 
+        document.getElementById("pageStepTitle").style.color =
+          current.k === "a"
+            ? "#2e7d32"
+            : current.k === "d" || current.k === "e"
+              ? "#e21b1b"
+              : current.k === "f"
+                ? "#d68413"
+                : current.k === "g"
+                  ? "#1f4fd8"
+                  : "#222";
+
         document.title =
           "XOR Backprop — Step " + current.k + ": " + currentTitle;
       }
@@ -3061,13 +3082,12 @@
             lossHist.push(c.loss);
 
             applyUpdate(net, c.g);
-
-            epoch++;
           } else {
             updateDisplayForPhase(phase);
           }
         } else {
           phase = 0;
+          epoch++;
         }
 
         if (history.length > 400) {
@@ -3095,6 +3115,7 @@
             history.push(snapshot());
 
             phase = 0;
+            epoch++;
 
             if (history.length > 400) {
               history.shift();
@@ -3112,8 +3133,6 @@
               lossHist.push(c.loss);
 
               applyUpdate(net, c.g);
-
-              epoch++;
             } else {
               updateDisplayForPhase(phase);
             }

@@ -523,6 +523,25 @@
         padding: 12px 22px;
       }
 
+      @keyframes pulse-attention {
+        0% {
+          transform: scale(1);
+          box-shadow: 0 0 0 0 rgba(0, 123, 255, 0.7);
+        }
+        70% {
+          transform: scale(1.05);
+          box-shadow: 0 0 0 15px rgba(0, 123, 255, 0);
+        }
+        100% {
+          transform: scale(1);
+          box-shadow: 0 0 0 0 rgba(0, 123, 255, 0);
+        }
+      }
+
+      #btnNext {
+        animation: pulse-attention 1.5s infinite;
+      }
+
       button.train {
         background: var(--struct);
         color: #fff;
@@ -3271,7 +3290,7 @@
         const r = lossBox.getBoundingClientRect();
         const sx = s.x;
         const sy = s.y;
-        const tx = r.left + 3;
+        const tx = r.left - 3.15;
         const ty = r.top + 52;
 
         overlay.setAttribute(
@@ -3645,6 +3664,7 @@
       }
 
       document.getElementById("btnNext").onclick = () => {
+        document.getElementById("btnNext").style.animation = "none";
         stopRun();
         nextStep();
       };
@@ -3655,11 +3675,13 @@
       };
 
       document.getElementById("btnEpoch1").onclick = () => {
+        document.getElementById("btnNext").style.animation = "none";
         stopRun();
         trainEpochs(1);
       };
 
       document.getElementById("btnEpoch10").onclick = () => {
+        document.getElementById("btnNext").style.animation = "none";
         stopRun();
         trainEpochs(10);
       };

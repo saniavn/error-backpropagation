@@ -607,7 +607,7 @@
         accent-color: var(--struct);
         margin: 0;
       }
-      @media (max-width: 1050px) {
+      @media (max-width: 780px) {
         .network-wrap {
           overflow-x: auto;
           padding-right: 0;
@@ -902,6 +902,404 @@
 
         .graph-buttons {
           justify-content: center;
+        }
+      }
+
+      .page-step-title {
+        font-size: clamp(22px, 2.35vw, 34px);
+        margin-bottom: clamp(7px, 0.8vw, 10px);
+        padding-inline: clamp(0px, 1vw, 12px);
+        text-wrap: balance;
+      }
+
+      .graph-buttons {
+        width: 100%;
+        margin: 0 0 clamp(9px, 1vw, 14px);
+        padding-inline: clamp(0px, 0.9vw, 12px);
+        gap: clamp(6px, 0.7vw, 10px) clamp(8px, 1.05vw, 16px);
+      }
+
+      .graph-buttons button,
+      .output-maps-toggle,
+      .graph-buttons .about-btn {
+        height: clamp(36px, 3.05vw, 44px);
+        min-height: 36px;
+        font-size: clamp(12px, 1.05vw, 15px);
+        padding: clamp(7px, 0.72vw, 9px) clamp(9px, 1.28vw, 20px);
+      }
+
+      button.step {
+        font-size: clamp(13px, 1.1vw, 16px);
+        padding-inline: clamp(11px, 1.45vw, 22px);
+      }
+
+      .output-maps-toggle input {
+        width: clamp(14px, 1.15vw, 17px);
+        height: clamp(14px, 1.15vw, 17px);
+      }
+
+      .stage-layout {
+        gap: clamp(12px, 1.65vw, 24px);
+      }
+
+      .step-sidebar {
+        flex: 0 0 clamp(126px, 12vw, 172px);
+        width: clamp(126px, 12vw, 172px);
+      }
+
+      .step-item {
+        padding: clamp(8px, 0.9vw, 13px) clamp(8px, 0.85vw, 12px);
+        font-size: clamp(12px, 1.1vw, 16px);
+        line-height: 1.2;
+        overflow-wrap: anywhere;
+      }
+
+      table.truth,
+      table.res {
+        width: 100%;
+        table-layout: fixed;
+        font-size: clamp(11px, 1vw, 14px);
+      }
+
+      table.truth th,
+      table.truth td,
+      table.res th,
+      table.res td {
+        padding-left: clamp(2px, 0.35vw, 6px);
+        padding-right: clamp(2px, 0.35vw, 6px);
+        overflow-wrap: anywhere;
+      }
+
+      .network-loss {
+        top: clamp(38px, 3.35vw, 48px);
+        right: clamp(8px, 1.55vw, 22px);
+        width: clamp(142px, 13.2vw, 190px);
+        padding: clamp(9px, 0.95vw, 14px) clamp(9px, 0.95vw, 14px)
+          clamp(11px, 1.2vw, 18px);
+      }
+
+      .lossbox .loss-title {
+        font-size: clamp(20px, 2.1vw, 30px);
+      }
+
+      .lossbox .loss-subtitle {
+        font-size: clamp(11px, 1.18vw, 17px);
+        margin-top: clamp(4px, 0.55vw, 8px);
+      }
+
+      .lossbox .val {
+        font-size: clamp(24px, 2.5vw, 36px);
+        margin: clamp(14px, 1.8vw, 26px) 0 clamp(10px, 1.25vw, 18px);
+      }
+
+      .network-loss #lossCanvas {
+        height: clamp(104px, 10.7vw, 154px);
+      }
+
+      .epoch-readout {
+        top: clamp(-5px, -0.35vw, -2px);
+        right: clamp(8px, 1.55vw, 22px);
+        width: clamp(142px, 13.2vw, 190px);
+        font-size: clamp(13px, 1.25vw, 18px);
+      }
+
+      .epoch-readout .num {
+        font-size: clamp(17px, 1.6vw, 23px);
+      }
+
+      .legend {
+        margin-left: calc(
+          clamp(126px, 12vw, 172px) + clamp(12px, 1.65vw, 24px)
+        );
+        font-size: clamp(11px, 1vw, 14px);
+        gap: clamp(6px, 0.7vw, 10px) clamp(10px, 1.2vw, 18px);
+      }
+
+      /* Between laptop and tablet widths, keep the table beside the network
+         and keep Loss over the graph, but scale both down proportionally. */
+      @media (min-width: 781px) and (max-width: 1100px) {
+        .stage-layout {
+          flex-direction: row;
+        }
+
+        .step-sidebar {
+          width: clamp(126px, 14vw, 154px);
+          flex: 0 0 clamp(126px, 14vw, 154px);
+        }
+
+        .network-loss {
+          position: absolute;
+          top: clamp(34px, 4vw, 44px);
+          right: clamp(6px, 1.4vw, 16px);
+          width: clamp(132px, 16vw, 174px);
+          margin: 0 !important;
+        }
+
+        .epoch-readout {
+          position: absolute;
+          top: -3px;
+          right: clamp(6px, 1.4vw, 16px);
+          width: clamp(132px, 16vw, 174px);
+        }
+
+        .legend {
+          margin-left: calc(
+            clamp(126px, 14vw, 154px) + clamp(12px, 1.65vw, 24px)
+          );
+        }
+      }
+
+      /* On narrow windows, stack the supporting UI cleanly above the map.
+         The SVG itself continues to scale to the full available width. */
+      @media (max-width: 780px) {
+        body {
+          padding: clamp(8px, 2vw, 12px);
+        }
+
+        .graph-buttons {
+          justify-content: center;
+          gap: 7px;
+        }
+
+        .graph-buttons .control-group,
+        .graph-buttons .step-nav-group {
+          flex: 1 1 auto;
+        }
+
+        .graph-buttons button,
+        .output-maps-toggle,
+        .graph-buttons .about-btn {
+          width: 100%;
+          justify-content: center;
+        }
+
+        .step-nav-group {
+          min-width: min(100%, 220px);
+        }
+
+        .step-nav-group .control-group {
+          min-width: 0;
+        }
+
+        .stage-layout {
+          flex-direction: column;
+          gap: 10px;
+        }
+
+        .step-sidebar {
+          display: grid;
+          grid-auto-flow: column;
+          grid-auto-columns: minmax(118px, 1fr);
+          width: 100%;
+          max-width: 100%;
+          flex: 0 0 auto;
+          overflow-x: auto;
+          border-bottom: 1px solid #a5a5a5;
+        }
+
+        .step-item {
+          border-bottom: none;
+          border-right: 1px solid #a5a5a5;
+          min-height: 58px;
+          display: flex;
+          align-items: center;
+        }
+
+        .step-item:last-child {
+          border-right: none;
+        }
+
+        .viz-area {
+          width: 100%;
+        }
+
+        .epoch-readout {
+          position: relative;
+          top: auto;
+          right: auto;
+          width: 100%;
+          margin: 0 0 7px;
+          text-align: center;
+        }
+
+        .epoch-readout .num {
+          display: inline;
+          margin-right: 5px;
+        }
+
+        .network-loss {
+          position: relative;
+          top: auto;
+          right: auto;
+          width: min(220px, 58vw);
+          margin: 0 auto 10px !important;
+        }
+
+        .network-wrap {
+          width: 100%;
+          aspect-ratio: 1160 / 520;
+        }
+
+        .legend {
+          margin-left: 0;
+          justify-content: center;
+        }
+      }
+
+      /* Phone/tablet */
+      @media (max-width: 780px) {
+        .network-wrap {
+          overflow-x: auto;
+          overflow-y: hidden;
+          -webkit-overflow-scrolling: touch;
+          aspect-ratio: auto;
+          touch-action: pan-x pan-y;
+        }
+
+        .network-wrap > svg#net {
+          width: max(100%, 720px);
+          min-width: 720px;
+          height: auto;
+          aspect-ratio: 1160 / 520;
+          flex: 0 0 auto;
+        }
+      }
+
+      @media (max-width: 460px) {
+        .graph-buttons .control-group,
+        .graph-buttons .step-nav-group {
+          flex-basis: 100%;
+        }
+
+        .step-nav-group {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          width: 100%;
+        }
+
+        .network-loss {
+          width: min(210px, 72vw);
+        }
+      }
+
+      /* Large-screen scaling*/
+      @media (min-width: 1101px) {
+        .page-step-title {
+          font-size: clamp(34px, 2.35vw, 56px);
+          margin-bottom: clamp(10px, 0.8vw, 18px);
+          padding-inline: clamp(12px, 1vw, 24px);
+        }
+
+        .graph-buttons {
+          margin-bottom: clamp(14px, 1vw, 24px);
+          padding-inline: clamp(12px, 0.9vw, 22px);
+          gap: clamp(10px, 0.7vw, 18px) clamp(16px, 1.05vw, 28px);
+        }
+
+        .graph-buttons button,
+        .output-maps-toggle,
+        .graph-buttons .about-btn {
+          height: clamp(44px, 3.05vw, 72px);
+          min-height: 44px;
+          font-size: clamp(15px, 1.05vw, 24px);
+          padding: clamp(9px, 0.72vw, 17px) clamp(20px, 1.28vw, 34px);
+        }
+
+        button.step {
+          font-size: clamp(16px, 1.1vw, 25px);
+          padding-inline: clamp(22px, 1.45vw, 38px);
+        }
+
+        .output-maps-toggle input {
+          width: clamp(17px, 1.15vw, 27px);
+          height: clamp(17px, 1.15vw, 27px);
+        }
+
+        .stage-layout {
+          gap: clamp(24px, 1.65vw, 42px);
+        }
+
+        .step-sidebar {
+          flex: 0 0 clamp(172px, 12vw, 300px);
+          width: clamp(172px, 12vw, 300px);
+        }
+
+        .step-item {
+          padding: clamp(13px, 0.9vw, 23px) clamp(12px, 0.85vw, 22px);
+          font-size: clamp(16px, 1.1vw, 25px);
+        }
+
+        table.truth,
+        table.res {
+          font-size: clamp(14px, 1vw, 23px);
+        }
+
+        table.truth th,
+        table.truth td,
+        table.res th,
+        table.res td {
+          padding-left: clamp(6px, 0.35vw, 10px);
+          padding-right: clamp(6px, 0.35vw, 10px);
+        }
+
+        .network-loss {
+          top: clamp(48px, 3.35vw, 82px);
+          right: clamp(22px, 1.55vw, 40px);
+          width: clamp(190px, 13.2vw, 320px);
+          padding: clamp(14px, 0.95vw, 24px) clamp(14px, 0.95vw, 24px)
+            clamp(18px, 1.2vw, 30px);
+        }
+
+        .lossbox .loss-title {
+          font-size: clamp(30px, 2.1vw, 48px);
+        }
+
+        .lossbox .loss-subtitle {
+          font-size: clamp(17px, 1.18vw, 28px);
+          margin-top: clamp(8px, 0.55vw, 14px);
+        }
+
+        .lossbox .val {
+          font-size: clamp(36px, 2.5vw, 58px);
+          margin: clamp(26px, 1.8vw, 44px) 0 clamp(18px, 1.25vw, 30px);
+        }
+
+        .network-loss #lossCanvas {
+          height: clamp(154px, 10.7vw, 260px);
+        }
+
+        .epoch-readout {
+          top: clamp(-8px, -0.35vw, -5px);
+          right: clamp(22px, 1.55vw, 40px);
+          width: clamp(190px, 13.2vw, 320px);
+          font-size: clamp(18px, 1.25vw, 30px);
+        }
+
+        .epoch-readout .num {
+          font-size: clamp(23px, 1.6vw, 38px);
+        }
+
+        .epoch-readout-spacer {
+          min-width: clamp(92px, 7vw, 170px);
+          flex-basis: clamp(92px, 7vw, 170px);
+          height: clamp(47px, 3.3vw, 78px);
+        }
+
+        .legend {
+          margin-left: calc(
+            clamp(172px, 12vw, 300px) + clamp(24px, 1.65vw, 42px)
+          );
+          font-size: clamp(14px, 1vw, 23px);
+          gap: clamp(10px, 0.7vw, 18px) clamp(18px, 1.2vw, 30px);
+        }
+
+        .lg .back-arrow {
+          font-size: clamp(25px, 1.75vw, 42px);
+        }
+
+        .dot {
+          width: clamp(9px, 0.7vw, 16px);
+          height: clamp(9px, 0.7vw, 16px);
         }
       }
 
@@ -1598,6 +1996,19 @@
           y: A.y + dy * nearHiddenT + ny * inwardOffset,
         };
 
+        if (outputMaps) {
+          const halfSize = 26;
+          const vx = tail.x - A.x;
+          const vy = tail.y - A.y;
+          const scale = Math.max(
+            Math.abs(vx) / halfSize,
+            Math.abs(vy) / halfSize,
+            1,
+          );
+          tip.x = A.x + vx / scale;
+          tip.y = A.y + vy / scale;
+        }
+
         const bdx = tip.x - tail.x;
         const bdy = tip.y - tail.y;
         const bL = Math.hypot(bdx, bdy) || 1;
@@ -1976,10 +2387,10 @@
 
         // Hidden-unit columns are symmetric around each neuron center
 
-        const hiddenErrorX = POS.hid[0].x - 43;
-        const hiddenOutputX = POS.hid[0].x + 50;
-        const lowerHiddenErrorX = POS.hid[1].x - 43;
-        const lowerHiddenOutputX = POS.hid[1].x + 50;
+        const hiddenErrorX = POS.hid[0].x - 30;
+        const hiddenOutputX = POS.hid[0].x + 38;
+        const lowerHiddenErrorX = POS.hid[1].x - 26;
+        const lowerHiddenOutputX = POS.hid[1].x + 34;
 
         if (showHiddenDelta && displayState.dHid) {
           drawValueList(
@@ -2021,7 +2432,7 @@
         if (showHiddenDelta && displayState.dHid) {
           drawValueList(
             lowerHiddenErrorX,
-            434,
+            410,
             "error\n(backprop)",
             displayState.dHid[1],
             COLOR.err,
@@ -2038,7 +2449,7 @@
         if (showHiddenY && displayState.h) {
           drawValueList(
             lowerHiddenOutputX,
-            424,
+            400,
             "hidden\nunit\nvalue (y)",
             displayState.h[1],
             COLOR.ink,
@@ -2140,7 +2551,7 @@
         // blue weight they influence, separated by just a small filled triangle
         drawDWList(
           455,
-          24,
+          30,
           cases.w[0][0],
           shownDW.w[0][0],
           WP.w00.x,
@@ -2156,7 +2567,7 @@
         );
 
         drawDWList(
-          462,
+          452,
           164,
           cases.w[0][1],
           shownDW.w[0][1],
@@ -2173,7 +2584,7 @@
         );
 
         drawDWList(
-          306,
+          320,
           222,
           cases.w[1][0],
           shownDW.w[1][0],
@@ -2183,7 +2594,7 @@
             gap: 9.2,
             anchor: "middle",
             triangleX: 344,
-            triangleY: 282,
+            triangleY: 302,
             triangleDir: "right",
             triangleSize: 5.5,
           },
@@ -2191,7 +2602,7 @@
 
         drawDWList(
           455,
-          420,
+          413,
           cases.w[1][1],
           shownDW.w[1][1],
           WP.w11.x,
@@ -2200,7 +2611,7 @@
             gap: 9.2,
             anchor: "middle",
             triangleX: 455,
-            triangleY: 392,
+            triangleY: 394,
             triangleDir: "up",
             triangleSize: 5.5,
           },
@@ -2214,7 +2625,7 @@
           triangleDir: "down",
         });
 
-        drawDWList(820, 382, cases.v[1], shownDW.v[1], WP.v1.x, WP.v1.y, {
+        drawDWList(820, 372, cases.v[1], shownDW.v[1], WP.v1.x, WP.v1.y, {
           gap: 9.2,
           anchor: "middle",
           triangleX: 820,
@@ -2232,18 +2643,18 @@
           triangleDir: "up",
         });
 
-        drawDWList(538, 398, cases.bh[1], shownDW.bh[1], WP.bh1.x, WP.bh1.y, {
+        drawDWList(538, 412, cases.bh[1], shownDW.bh[1], WP.bh1.x, WP.bh1.y, {
           gap: 8.9,
           anchor: "middle",
-          triangleX: 586,
-          triangleY: 388,
+          triangleX: 566,
+          triangleY: 402,
           triangleDir: "right",
         });
 
-        drawDWList(956, 350, cases.bo, shownDW.bo, WP.bo.x, WP.bo.y, {
+        drawDWList(945, 345, cases.bo, shownDW.bo, WP.bo.x, WP.bo.y, {
           gap: 8.9,
           anchor: "middle",
-          triangleX: 956,
+          triangleX: 945,
           triangleY: 325,
           triangleDir: "up",
           triangleSize: 5.5,
@@ -2251,7 +2662,7 @@
       }
 
       function drawXORSchematic() {
-        const gx = 248,
+        const gx = 263,
           gy = 18,
           s = 68;
 
@@ -2472,7 +2883,7 @@
         const marker = el("marker", {
           id: "forwardArrowHead",
           viewBox: "0 0 10 10",
-          refX: 9.2,
+          refX: 10,
           refY: 5,
           markerWidth: 8.5,
           markerHeight: 8.5,
@@ -2520,6 +2931,17 @@
           y: node.y + yOffset,
         });
 
+        const OUTPUT_MAP_HALF = 26;
+
+        const squareLeftContact = (
+          node,
+          yOffset,
+          halfSize = OUTPUT_MAP_HALF,
+        ) => ({
+          x: node.x - halfSize,
+          y: node.y + Math.max(-halfSize, Math.min(halfSize, yOffset)),
+        });
+
         // Forward arrows. Weight labels, fixed positions for a regular layout
         const WP = {
           w00: { x: 455, y: 136 },
@@ -2543,7 +2965,9 @@
               inputOffset = i === 0 ? -7 : 0;
             }
 
-            const end = leftContact(b, RH, inputOffset);
+            const end = outputMaps
+              ? squareLeftContact(b, inputOffset)
+              : leftContact(b, RH, inputOffset);
             const sx = a.x + 11,
               sy = a.y;
             netSvg.appendChild(
@@ -2553,7 +2977,7 @@
                 x2: end.x,
                 y2: end.y,
                 stroke: COLOR.ink,
-                "stroke-width": 1.25,
+                "stroke-width": phase === 1 ? 2.5 : 1.25,
                 "marker-end":
                   j === 0
                     ? "url(#cleanForwardArrowHead)"
@@ -2576,7 +3000,9 @@
 
         for (let j = 0; j < 2; j++) {
           const a = POS.hid[j],
-            end = leftContact(POS.out, RO, j === 0 ? -9 : 2),
+            end = outputMaps
+              ? squareLeftContact(POS.out, j === 0 ? -9 : 2)
+              : leftContact(POS.out, RO, j === 0 ? -9 : 2),
             sx = a.x + RH,
             sy = a.y;
           netSvg.appendChild(
@@ -2586,7 +3012,7 @@
               x2: end.x,
               y2: end.y,
               stroke: COLOR.ink,
-              "stroke-width": 1.25,
+              "stroke-width": phase === 2 ? 2.5 : 1.25,
               "marker-end": "url(#cleanForwardArrowHead)",
             }),
           );
@@ -2740,8 +3166,9 @@
             tx: x - r + 2,
             ty: neuronY + 10,
 
-            weightX: x - 30,
-            weightY: neuronY + 48,
+            // Place the lower hidden bias weight label just above the ΔW block
+            weightX: x - 110,
+            weightY: neuronY + 32,
           };
 
           // Output neuron
@@ -2768,13 +3195,32 @@
               ? neuronY + 64
               : neuronY + 60;
 
+        const biasTarget = outputMaps
+          ? (() => {
+              const halfSize = 26;
+              const vx =
+                cfg.stemTopY === neuronY ? cfg.stemX - x : cfg.stemX - x;
+              const vy = cfg.stemTopY - neuronY;
+              const scale = Math.max(
+                Math.abs(vx) / halfSize,
+                Math.abs(vy) / halfSize,
+                1,
+              );
+              return { x: x + vx / scale, y: neuronY + vy / scale };
+            })()
+          : { x: cfg.tx, y: cfg.ty };
+
         // vertical segment, then one diagonal segment into the neuron.
         netSvg.appendChild(
           el("path", {
-            d: `M ${cfg.stemX} ${stemBottomY} L ${cfg.stemX} ${cfg.stemTopY} L ${cfg.tx} ${cfg.ty}`,
+            d: `M ${cfg.stemX} ${stemBottomY} L ${cfg.stemX} ${cfg.stemTopY} L ${biasTarget.x} ${biasTarget.y}`,
             fill: "none",
             stroke: COLOR.ink,
-            "stroke-width": 1.35,
+            "stroke-width":
+              (phase === 1 && x === POS.hid[0].x) ||
+              (phase === 2 && x === POS.out.x)
+                ? 2.7
+                : 1.35,
             "stroke-linecap": "round",
             "stroke-linejoin": "round",
             "marker-end": "url(#forwardArrowHead)",
@@ -2804,7 +3250,7 @@
         if (!overlay || !path || !lossBox) return;
 
         const showDelta = epoch > 0 || phase >= 3;
-        if (!showDelta || !displayState.E || window.innerWidth <= 1050) {
+        if (!showDelta || !displayState.E || window.innerWidth <= 780) {
           overlay.style.display = "none";
           return;
         }

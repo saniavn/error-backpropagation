@@ -2555,10 +2555,10 @@
 
         // The blue labels and the ΔW pointers both use the same fixed weight positions
         const WP = {
-          w00: { x: 455, y: 136 },
+          w00: { x: 427, y: 144 },
           w01: { x: 385, y: 235 },
-          w10: { x: 385, y: 282 },
-          w11: { x: 455, y: 383 },
+          w10: { x: 385, y: 298 },
+          w11: { x: 427, y: 383 },
           v0: { x: 820, y: 184 },
           v1: { x: 820, y: 342 },
           bh0: { x: 595, y: 207 },
@@ -2569,8 +2569,8 @@
         // ΔW blocks, narrow columns lined up with the
         // blue weight they influence, separated by just a small filled triangle
         drawDWList(
-          455,
-          30,
+          427,
+          38,
           cases.w[0][0],
           shownDW.w[0][0],
           WP.w00.x,
@@ -2578,8 +2578,8 @@
           {
             gap: 9.2,
             anchor: "middle",
-            triangleX: 455,
-            triangleY: 109,
+            triangleX: 427,
+            triangleY: 117,
             triangleDir: "down",
             triangleSize: 5.5,
           },
@@ -2595,7 +2595,7 @@
           {
             gap: 9.2,
             anchor: "middle",
-            triangleX: 426,
+            triangleX: 420,
             triangleY: 235,
             triangleDir: "left",
             triangleSize: 5.5,
@@ -2604,7 +2604,7 @@
 
         drawDWList(
           320,
-          222,
+          230,
           cases.w[1][0],
           shownDW.w[1][0],
           WP.w10.x,
@@ -2612,15 +2612,15 @@
           {
             gap: 9.2,
             anchor: "middle",
-            triangleX: 344,
-            triangleY: 302,
+            triangleX: 348,
+            triangleY: 297,
             triangleDir: "right",
             triangleSize: 5.5,
           },
         );
 
         drawDWList(
-          455,
+          427,
           413,
           cases.w[1][1],
           shownDW.w[1][1],
@@ -2629,17 +2629,17 @@
           {
             gap: 9.2,
             anchor: "middle",
-            triangleX: 455,
+            triangleX: 427,
             triangleY: 394,
             triangleDir: "up",
             triangleSize: 5.5,
           },
         );
 
-        drawDWList(836, 80, cases.v[0], shownDW.v[0], WP.v0.x, WP.v0.y, {
+        drawDWList(824, 80, cases.v[0], shownDW.v[0], WP.v0.x, WP.v0.y, {
           gap: 9.2,
           anchor: "middle",
-          triangleX: 840,
+          triangleX: 824,
           triangleY: 160,
           triangleDir: "down",
         });
@@ -2654,27 +2654,27 @@
 
         // The Bias ΔW columns are kept compact and joined with a solid side triangle,
         // rather than with a dashed leader line
-        drawDWList(642, 239, cases.bh[0], shownDW.bh[0], WP.bh0.x, WP.bh0.y, {
+        drawDWList(642, 233, cases.bh[0], shownDW.bh[0], WP.bh0.x, WP.bh0.y, {
           gap: 8.9,
           anchor: "middle",
-          triangleX: 642,
+          triangleX: 648,
           triangleY: 213,
           triangleDir: "up",
         });
 
-        drawDWList(538, 412, cases.bh[1], shownDW.bh[1], WP.bh1.x, WP.bh1.y, {
+        drawDWList(545, 423, cases.bh[1], shownDW.bh[1], WP.bh1.x, WP.bh1.y, {
           gap: 8.9,
           anchor: "middle",
-          triangleX: 566,
-          triangleY: 402,
-          triangleDir: "right",
+          triangleX: 545,
+          triangleY: 405,
+          triangleDir: "up",
         });
 
-        drawDWList(945, 345, cases.bo, shownDW.bo, WP.bo.x, WP.bo.y, {
+        drawDWList(945, 337, cases.bo, shownDW.bo, WP.bo.x, WP.bo.y, {
           gap: 8.9,
           anchor: "middle",
           triangleX: 945,
-          triangleY: 325,
+          triangleY: 317,
           triangleDir: "up",
           triangleSize: 5.5,
         });
@@ -2963,10 +2963,10 @@
 
         // Forward arrows. Weight labels, fixed positions for a regular layout
         const WP = {
-          w00: { x: 455, y: 136 },
+          w00: { x: 427, y: 144 },
           w01: { x: 385, y: 235 },
-          w10: { x: 385, y: 282 },
-          w11: { x: 455, y: 383 },
+          w10: { x: 385, y: 298 },
+          w11: { x: 427, y: 383 },
           v0: { x: 820, y: 184 },
           v1: { x: 820, y: 342 },
         };
@@ -3686,7 +3686,10 @@
         trainEpochs(10);
       };
 
-      document.getElementById("btnRun").onclick = toggleRun;
+      document.getElementById("btnRun").onclick = () => {
+        document.getElementById("btnNext").style.animation = "none";
+        toggleRun();
+      };
 
       document.getElementById("btnReset").onclick = reset;
 
